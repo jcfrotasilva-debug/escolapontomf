@@ -1,0 +1,4 @@
+DATABASE_URL = postgresql://postgres.dotfwzsfriakwpknhibd:JoCaFa1506Si@aws-0-sa-east-1.pooler.supabase.com:5432/postgres
+SERVICE_ROW
+SUPABASE_JWT_SECRET
+NEXT_PUBLIC_SUPABASE_ANON_KEY
