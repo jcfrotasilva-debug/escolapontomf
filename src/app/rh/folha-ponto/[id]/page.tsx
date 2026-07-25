@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter, useParams, useSearchParams } from 'next/navigation';
 import { AuthProvider, useAuth } from '@/components/AuthProvider';
 import {
@@ -152,57 +152,53 @@ function MonthlyReportContent() {
   const params = useParams();
   const searchParams = useSearchParams();
   
-  // Usar useMemo para estabilizar valores e evitar loops infinitos
-  const serverId = useMemo(() => parseInt(params.id as string, 10), [params.id]);
-
-  const initialMonth = useMemo(() => {
-    const m = searchParams.get('month');
-    if (m) return m;
-    const d = new Date();
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-  }, [searchParams]);
+  // Extrair valores ESTÁVEIS uma única vez
+  const serverId = Number(params.id);
+  const initialMonth = searchParams.get('month') || 
+    `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`;
 
   const [month, setMonth] = useState(initialMonth);
   const [report, setReport] = useState<ReportData | null>(null);
   const [loading, setLoading] = useState(true);
-  
-  // Refs para evitar re-render desnecessário
-  const isFetching = useRef(false);
+  const [hasFetched, setHasFetched] = useState(false);
 
-  // useCallback para estabilizar a função fetchReport
-  const fetchReport = useCallback(async () => {
-    if (isFetching.current || !user || !serverId || !month) return;
-    
-    isFetching.current = true;
-    setLoading(true);
-    
-    try {
-      const res = await fetch(`/api/reports/monthly?userId=${serverId}&month=${month}`);
-      if (res.ok) {
-        const data = await res.json();
-        setReport(data);
-      } else {
-        console.error('Erro ao carregar relatório:', res.status);
-      }
-    } catch (e) {
-      console.error('Erro ao buscar relatório:', e);
-    } finally {
-      setLoading(false);
-      isFetching.current = false;
-    }
-  }, [user, serverId, month]);
-
-  // Efeito para redirecionar se não autenticado (sem router nas dependências)
+  // Efeito simples para autenticação
   useEffect(() => {
     if (!authLoading && !user) {
       router.push('/login');
     }
-  }, [user, authLoading, router]);
+  }, [authLoading, user]); // router removido das dependências
 
-  // Efeito para buscar relatório quando user, serverId ou month mudar
+  // Resetar flag quando o mês mudar
   useEffect(() => {
-    fetchReport();
-  }, [fetchReport]);
+    setHasFetched(false);
+  }, [month]);
+
+  // Efeito simples para buscar dados
+  useEffect(() => {
+    if (hasFetched || !user || !serverId || !month) return;
+    
+    setHasFetched(true);
+    setLoading(true);
+    
+    const fetchData = async () => {
+      try {
+        const res = await fetch(`/api/reports/monthly?userId=${serverId}&month=${month}`);
+        if (res.ok) {
+          const data = await res.json();
+          setReport(data);
+        } else {
+          console.error('Erro ao carregar relatório:', res.status);
+        }
+      } catch (e) {
+        console.error('Erro ao buscar relatório:', e);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchData();
+  }, [user, serverId, month, hasFetched]);
 
   function handlePrint() {
     window.print();
