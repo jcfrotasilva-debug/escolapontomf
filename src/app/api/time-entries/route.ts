@@ -68,12 +68,12 @@ export async function POST(request: Request) {
       .then((rows) => rows[0]);
 
     // ========================================================================
-    // CORREÇÃO: Só bloqueia se EXISTE registro E estiver marcado como "não trabalha"
-    // Se NÃO existir registro (servidor sem horário cadastrado), PERMITE registrar
+    // CORREÇÃO: Bloqueia se NÃO existir horário OU se estiver marcado como "não trabalha"
+    // Servidor SEM horário definido NÃO pode registrar ponto
     // ========================================================================
-    if (workSchedule && !workSchedule.isWorkday) {
+    if (!workSchedule || !workSchedule.isWorkday) {
       return NextResponse.json(
-        { error: `Você não tem jornada de trabalho cadastrada para ${weekdayNames[currentWeekday]}. Entre em contato com o RH para regularizar sua jornada.` },
+        { error: `Você não tem horário de trabalho cadastrado para ${weekdayNames[currentWeekday]}. Entre em contato com o RH para regularizar sua jornada.` },
         { status: 403 }
       );
     }

@@ -53,7 +53,7 @@ export async function PATCH(_req: Request, { params }: Context) {
     }
 
     // Se aprovado, aplicar a alteração no registro
-    if (status === 'approved') {
+    if (status === 'approved' && adjustment.timeEntryId) {
       const updateData: Record<string, unknown> = {};
       if (adjustment.newValue) {
         updateData[adjustment.fieldAltered] = adjustment.newValue;
@@ -65,7 +65,28 @@ export async function PATCH(_req: Request, { params }: Context) {
       await db
         .update(timeEntries)
         .set(updateData)
-        .where(eq(timeEntries.id, adjustment.timeEntryId!));
+        .where(eq(timeEntries.id, adjustment.timeEntryId));
+    } else if (status === 'approved' && !adjustment.timeEntryId) {
+      // Se não existe registro, criar um novo
+      const newEntryData: any = {
+        userId: adjustment.userId,
+        entryDate: adjustment.entryDate,
+      };
+      
+      if (adjustment.newValue) {
+        newEntryData[adjustment.fieldAltered] = adjustment.newValue;
+      }
+      
+      const [newEntry] = await db
+        .insert(timeEntries)
+        .values(newEntryData)
+        .returning();
+      
+      // Atualizar o adjustment com o novo timeEntryId
+      await db
+        .update(timeEntryAdjustments)
+        .set({ timeEntryId: newEntry.id })
+        .where(eq(timeEntryAdjustments.id, adjustmentId));
     }
 
     // Atualizar a retificação

@@ -51,6 +51,7 @@ function AdjustmentsContent() {
   const router = useRouter();
 
   const [adjustments, setAdjustments] = useState<Adjustment[]>([]);
+  const [servers, setServers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
   const [month, setMonth] = useState(() => {
@@ -73,6 +74,7 @@ function AdjustmentsContent() {
   const [reviewModal, setReviewModal] = useState<Adjustment | null>(null);
   const [reviewNotes, setReviewNotes] = useState('');
   const [reviewLoading, setReviewLoading] = useState(false);
+  const [reviewError, setReviewError] = useState('');
 
   useEffect(() => {
     if (!authLoading && (!user || user.role !== 'hr')) {
@@ -82,6 +84,7 @@ function AdjustmentsContent() {
 
   useEffect(() => {
     if (user?.role === 'hr') {
+      fetchServers();
       fetchAdjustments();
     }
   }, [user, month]);
@@ -101,22 +104,43 @@ function AdjustmentsContent() {
     }
   }
 
+  async function fetchServers() {
+    try {
+      const res = await fetch('/api/employees');
+      if (res.ok) {
+        const data = await res.json();
+        setServers(data.users.filter((u: any) => u.role === 'server' && u.active));
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
   async function handleReview(status: 'approved' | 'rejected') {
     if (!reviewModal) return;
     setReviewLoading(true);
+    setReviewError('');
+    
     try {
       const res = await fetch(`/api/adjustments/${reviewModal.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status, reviewNotes }),
       });
+      
       if (res.ok) {
+        const data = await res.json();
         setReviewModal(null);
         setReviewNotes('');
+        setReviewError('');
         fetchAdjustments();
+      } else {
+        const errorData = await res.json().catch(() => ({ error: 'Erro desconhecido' }));
+        setReviewError(errorData.error || 'Erro ao processar solicitação');
       }
     } catch (e) {
-      console.error(e);
+      console.error('Erro ao analisar retificação:', e);
+      setReviewError('Erro de conexão. Tente novamente.');
     } finally {
       setReviewLoading(false);
     }
@@ -354,6 +378,15 @@ function AdjustmentsContent() {
               />
             </div>
 
+            {reviewError && (
+              <div className="mb-4 bg-red-50 border border-red-200 rounded-xl p-3">
+                <p className="text-sm text-red-800 flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4" />
+                  {reviewError}
+                </p>
+              </div>
+            )}
+
             <div className="flex gap-3">
               <button
                 onClick={() => handleReview('rejected')}
@@ -405,6 +438,11 @@ function AdjustmentsContent() {
                   className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500"
                 >
                   <option value="">Selecione...</option>
+                  {servers.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.name} {s.registration ? `(${s.registration})` : ''}
+                    </option>
+                  ))}
                 </select>
               </div>
 

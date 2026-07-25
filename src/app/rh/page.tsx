@@ -463,6 +463,13 @@ function HrContent() {
             color="green"
           />
           <QuickActionCard
+            icon={<FileText className="w-5 h-5" />}
+            title="📄 Folha Ponto v2"
+            description="Nova versão da folha ponto mensal"
+            onClick={() => router.push('/rh/relatorios/folha-ponto')}
+            color="indigo"
+          />
+          <QuickActionCard
             icon={<Settings className="w-5 h-5" />}
             title="⚙️ Configurações"
             description="Brasão, backup e restauração"
