@@ -1,14 +1,12 @@
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter, useParams, useSearchParams } from 'next/navigation';
 import { AuthProvider, useAuth } from '@/components/AuthProvider';
 import {
   ArrowLeft,
   Printer,
   Loader2,
-  Calendar,
-  Download,
 } from 'lucide-react';
 import { formatTimeInBrazil, formatDateBR, calculateWorkedHours, getCurrentBrazilDate } from '@/lib/timezone';
 
@@ -112,16 +110,16 @@ type ReportData = {
 
 function DocumentHeader({ brasaoUrl }: { brasaoUrl: string | null }) {
   return (
-    <div className="border-b-4 border-double border-slate-900 pb-3 mb-3">
+    <div className="border-b-2 border-double border-slate-900 pb-2 mb-2">
       <div className="flex items-center">
         {/* Logo/Brasão à esquerda */}
-        <div className="w-24 h-24 flex items-center justify-center flex-shrink-0">
+        <div className="w-20 h-20 flex items-center justify-center flex-shrink-0">
           {brasaoUrl ? (
             <img src={brasaoUrl} alt="Brasão" className="max-w-full max-h-full object-contain" />
           ) : (
-            <div className="w-full h-full border-2 border-slate-900 rounded-lg flex items-center justify-center bg-slate-50">
-              <div className="text-center px-2">
-                <div className="text-[8px] font-bold text-slate-700 leading-tight">BRASÃO<br />DA<br />ESCOLA</div>
+            <div className="w-full h-full border-2 border-slate-900 rounded flex items-center justify-center bg-slate-50">
+              <div className="text-center px-1">
+                <div className="text-[7px] font-bold text-slate-700 leading-tight">BRASÃO<br />DA<br />ESCOLA</div>
               </div>
             </div>
           )}
@@ -129,20 +127,20 @@ function DocumentHeader({ brasaoUrl }: { brasaoUrl: string | null }) {
 
         {/* Textos centralizados */}
         <div className="flex-1 text-center">
-          <p className="text-[11px] text-slate-800 font-bold uppercase tracking-wider leading-tight">
+          <p className="text-[10px] text-slate-800 font-bold uppercase tracking-wider leading-tight">
             GOVERNO DO ESTADO DE SÃO PAULO
           </p>
-          <p className="text-[11px] text-slate-800 font-bold uppercase tracking-wider leading-tight mt-0.5">
+          <p className="text-[10px] text-slate-800 font-bold uppercase tracking-wider leading-tight">
             SECRETARIA DE ESTADO DA EDUCAÇÃO
           </p>
-          <div className="my-1.5 w-32 h-[2px] bg-slate-900 mx-auto"></div>
-          <h1 className="text-[13px] font-bold text-slate-900 uppercase tracking-wider leading-tight">
+          <div className="my-1 w-24 h-[1.5px] bg-slate-900 mx-auto"></div>
+          <h1 className="text-[12px] font-bold text-slate-900 uppercase tracking-wider leading-tight">
             EE PROFA. MARLENE FRATTINI
           </h1>
         </div>
 
         {/* Espaço vazio à direita para balancear visualmente */}
-        <div className="w-24 h-24 flex-shrink-0"></div>
+        <div className="w-20 h-20 flex-shrink-0"></div>
       </div>
     </div>
   );
@@ -272,23 +270,23 @@ function FolhaPontoContent() {
       </div>
 
       {/* ====== FRENTE: Folha Ponto ====== */}
-      <div className="max-w-5xl mx-auto p-2 print:p-0">
+      <div className="max-w-5xl mx-auto p-1 print:p-0">
         <div className="bg-white shadow-lg print:shadow-none print-page print:pb-0">
           {/* Cabeçalho */}
           <DocumentHeader brasaoUrl={report.brasaoUrl} />
 
           {/* Título do documento */}
-          <div className="text-center mb-1">
-            <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wide">Folha de Ponto Mensal</h2>
-            <p className="text-[9px] text-slate-600">
+          <div className="text-center mb-0.5">
+            <h2 className="text-xs font-bold text-slate-900 uppercase tracking-wide">Folha de Ponto Mensal</h2>
+            <p className="text-[8px] text-slate-600">
               Referência: <strong className="text-slate-900">{MONTH_NAMES[report.month.month - 1]} de {report.month.year}</strong>
             </p>
           </div>
 
           {/* Dados do servidor */}
-          <div className="border border-slate-900 rounded p-1.5 mb-1.5">
-            <h3 className="text-[8px] font-bold text-slate-700 uppercase tracking-wider mb-0.5">Dados do Servidor</h3>
-            <div className="grid grid-cols-2 gap-x-3 gap-y-0.5 text-[10px]">
+          <div className="border border-slate-900 rounded p-1 mb-1">
+            <h3 className="text-[7px] font-bold text-slate-700 uppercase tracking-wider mb-0.5">Dados do Servidor</h3>
+            <div className="grid grid-cols-2 gap-x-2 gap-y-0.5 text-[9px]">
               <div>
                 <span className="text-slate-600 font-medium">Nome: </span>
                 <span className="font-bold text-slate-900">{report.user.name}</span>
@@ -298,7 +296,7 @@ function FolhaPontoContent() {
                 <span className="font-bold text-slate-900">{report.user.registration || '—'}</span>
               </div>
               <div>
-                <span className="text-slate-600 font-medium">Cargo/Função: </span>
+                <span className="text-slate-600 font-medium">Cargo: </span>
                 <span className="font-bold text-slate-900">{report.user.position || '—'}</span>
               </div>
               <div>
@@ -321,20 +319,20 @@ function FolhaPontoContent() {
           </div>
 
           {/* Tabela de registros */}
-          <div className="mb-1.5">
-            <h3 className="text-[8px] font-bold text-slate-700 uppercase tracking-wider mb-0.5">
+          <div className="mb-1">
+            <h3 className="text-[7px] font-bold text-slate-700 uppercase tracking-wider mb-0.5">
               Registros Diários de Ponto
             </h3>
-            <table className="w-full border-collapse text-[9px]">
+            <table className="w-full border-collapse text-[8px]">
               <thead>
                 <tr className="bg-slate-900 text-white">
-                  <th className="border border-slate-700 px-0.5 py-0.5 text-center font-semibold w-6">Dia</th>
-                  <th className="border border-slate-700 px-0.5 py-0.5 text-center font-semibold w-8">D.S.</th>
-                  <th className="border border-slate-700 px-0.5 py-0.5 text-center font-semibold">Entrada</th>
-                  <th className="border border-slate-700 px-0.5 py-0.5 text-center font-semibold">S.Almoço</th>
-                  <th className="border border-slate-700 px-0.5 py-0.5 text-center font-semibold">Retorno</th>
-                  <th className="border border-slate-700 px-0.5 py-0.5 text-center font-semibold">Saída</th>
-                  <th className="border border-slate-700 px-0.5 py-0.5 text-center font-semibold w-24">Obs.</th>
+                  <th className="border border-slate-700 px-0.5 py-0.5 text-center font-semibold w-5">Dia</th>
+                  <th className="border border-slate-700 px-0.5 py-0.5 text-center font-semibold w-7">D.S.</th>
+                  <th className="border border-slate-700 px-0.5 py-0.5 text-center font-semibold">E</th>
+                  <th className="border border-slate-700 px-0.5 py-0.5 text-center font-semibold">SA</th>
+                  <th className="border border-slate-700 px-0.5 py-0.5 text-center font-semibold">RA</th>
+                  <th className="border border-slate-700 px-0.5 py-0.5 text-center font-semibold">S</th>
+                  <th className="border border-slate-700 px-0.5 py-0.5 text-center font-semibold w-20">Obs.</th>
                 </tr>
               </thead>
               <tbody>
@@ -379,21 +377,21 @@ function FolhaPontoContent() {
 
                   return (
                     <tr key={day.date} className={rowBg}>
-                      <td className="border border-slate-300 px-0.5 py-0.5 text-center font-semibold text-[9px]">{day.date.slice(8, 10)}</td>
-                      <td className="border border-slate-300 px-0.5 py-0.5 text-center text-[9px]">{WEEKDAY_SHORT[day.weekday]}</td>
-                      <td className="border border-slate-300 px-0.5 py-0.5 text-center font-mono text-[9px]">
+                      <td className="border border-slate-300 px-0.5 py-0.5 text-center font-semibold text-[8px]">{day.date.slice(8, 10)}</td>
+                      <td className="border border-slate-300 px-0.5 py-0.5 text-center text-[8px]">{WEEKDAY_SHORT[day.weekday]}</td>
+                      <td className="border border-slate-300 px-0.5 py-0.5 text-center font-mono text-[8px]">
                         {hasEntry ? formatTimeInBrazil(day.entry?.checkIn) : '—'}
                       </td>
-                      <td className="border border-slate-300 px-0.5 py-0.5 text-center font-mono text-[9px]">
+                      <td className="border border-slate-300 px-0.5 py-0.5 text-center font-mono text-[8px]">
                         {hasEntry ? formatTimeInBrazil(day.entry?.lunchOut) : '—'}
                       </td>
-                      <td className="border border-slate-300 px-0.5 py-0.5 text-center font-mono text-[9px]">
+                      <td className="border border-slate-300 px-0.5 py-0.5 text-center font-mono text-[8px]">
                         {hasEntry ? formatTimeInBrazil(day.entry?.lunchIn) : '—'}
                       </td>
-                      <td className="border border-slate-300 px-0.5 py-0.5 text-center font-mono text-[9px]">
+                      <td className="border border-slate-300 px-0.5 py-0.5 text-center font-mono text-[8px]">
                         {hasEntry ? formatTimeInBrazil(day.entry?.checkOut) : '—'}
                       </td>
-                      <td className="border border-slate-300 px-0.5 py-0.5 text-[8px]">
+                      <td className="border border-slate-300 px-0.5 py-0.5 text-[7px]">
                         {obs}
                       </td>
                     </tr>
@@ -402,56 +400,54 @@ function FolhaPontoContent() {
               </tbody>
               <tfoot>
                 <tr className="bg-slate-100 font-bold">
-                  <td colSpan={6} className="border border-slate-700 px-1 py-0.5 text-right text-[9px]">
-                    TOTAL DE DIAS REGISTRADOS: {totalEntries} · Total de horas trabalhadas no mês: {totalHours}h{String(totalMins).padStart(2, '0')}
+                  <td colSpan={6} className="border border-slate-700 px-1 py-0.5 text-right text-[8px]">
+                    TOTAL DIAS: {totalEntries} · HORAS: {totalHours}h{String(totalMins).padStart(2, '0')}
                   </td>
-                  <td className="border border-slate-700 px-0.5 py-0.5 text-[8px]"></td>
+                  <td className="border border-slate-700 px-0.5 py-0.5 text-[7px]"></td>
                 </tr>
               </tfoot>
             </table>
           </div>
 
           {/* Resumo de ocorrências */}
-          <div className="grid grid-cols-4 gap-1 mb-2 text-[9px]">
-            <div className="border border-slate-300 rounded p-1 text-center">
-              <p className="text-slate-500 font-medium">Dias Trabalhados</p>
-              <p className="text-sm font-bold text-green-700">{totalEntries}</p>
+          <div className="grid grid-cols-4 gap-0.5 mb-1 text-[8px]">
+            <div className="border border-slate-300 rounded p-0.5 text-center">
+              <p className="text-slate-500 font-medium">Trabalhados</p>
+              <p className="text-xs font-bold text-green-700">{totalEntries}</p>
             </div>
-            <div className="border border-slate-300 rounded p-1 text-center">
+            <div className="border border-slate-300 rounded p-0.5 text-center">
               <p className="text-slate-500 font-medium">Feriados</p>
-              <p className="text-sm font-bold text-orange-700">{report.occurrences?.length || 0}</p>
+              <p className="text-xs font-bold text-orange-700">{report.occurrences?.length || 0}</p>
             </div>
-            <div className="border border-slate-300 rounded p-1 text-center">
-              <p className="text-slate-500 font-medium">Dias Afastado</p>
-              <p className="text-sm font-bold text-purple-700">{report.days.filter(d => d.absence).length}</p>
+            <div className="border border-slate-300 rounded p-0.5 text-center">
+              <p className="text-slate-500 font-medium">Afastado</p>
+              <p className="text-xs font-bold text-purple-700">{report.days.filter(d => d.absence).length}</p>
             </div>
-            <div className="border border-slate-300 rounded p-1 text-center">
+            <div className="border border-slate-300 rounded p-0.5 text-center">
               <p className="text-slate-500 font-medium">Justificativas</p>
-              <p className="text-sm font-bold text-amber-700">{report.justifications.length}</p>
+              <p className="text-xs font-bold text-amber-700">{report.justifications.length}</p>
             </div>
           </div>
 
           {/* Assinaturas */}
-          <div className="grid grid-cols-2 gap-4 mt-4 pt-2">
+          <div className="grid grid-cols-2 gap-4 mt-3">
             <div className="text-center">
               <div className="border-t border-slate-900 pt-1">
                 <p className="text-[10px] font-bold text-slate-900">{report.user.name}</p>
-                <p className="text-[9px] text-slate-600">{report.user.position || 'Servidor(a)'}</p>
-                <p className="text-[9px] text-slate-600">Matrícula: {report.user.registration || '—'}</p>
+                <p className="text-[9px] text-slate-600">{report.user.position || 'Servidor(a)'} · Matrícula: {report.user.registration || '—'}</p>
               </div>
               <p className="text-[9px] text-slate-500 mt-0.5">Servidor(a)</p>
             </div>
             <div className="text-center">
               <div className="border-t border-slate-900 pt-1">
                 <p className="text-[10px] font-bold text-slate-900">____________________________________</p>
-                <p className="text-[9px] text-slate-600">Responsável pelo RH</p>
+                <p className="text-[9px] text-slate-600">Diretor de Escola</p>
                 <p className="text-[9px] text-slate-600">EE Profa. Marlene Frattini</p>
               </div>
-              <p className="text-[9px] text-slate-500 mt-0.5">Recursos Humanos</p>
             </div>
           </div>
 
-          <div className="mt-2 text-center text-[9px] text-slate-500 border-t border-slate-200 pt-1">
+          <div className="mt-1.5 text-center text-[8px] text-slate-500 border-t border-slate-200 pt-1">
             Documento gerado eletronicamente em {new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })} · Sistema de Ponto Eletrônico EE Profa. Marlene Frattini
           </div>
         </div>
@@ -461,18 +457,18 @@ function FolhaPontoContent() {
             {/* Cabeçalho */}
             <DocumentHeader brasaoUrl={report.brasaoUrl} />
 
-            <div className="text-center mb-3">
-              <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wide">
+            <div className="text-center mb-1.5">
+              <h2 className="text-xs font-bold text-slate-900 uppercase tracking-wide">
                 {report.justifications.length > 0 ? 'Justificativas de Ausência' : 'Registro de Ocorrências'}
               </h2>
-              <p className="text-[9px] text-slate-600">
+              <p className="text-[8px] text-slate-600">
                 Anexo à Folha de Ponto · {MONTH_NAMES[report.month.month - 1]} de {report.month.year}
               </p>
             </div>
 
-            <div className="border border-slate-900 rounded p-2 mb-3">
-              <h3 className="text-[8px] font-bold text-slate-700 uppercase tracking-wider mb-1">Servidor</h3>
-              <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-[10px]">
+            <div className="border border-slate-900 rounded p-1.5 mb-2">
+              <h3 className="text-[7px] font-bold text-slate-700 uppercase tracking-wider mb-0.5">Servidor</h3>
+              <div className="grid grid-cols-2 gap-x-2 gap-y-0.5 text-[9px]">
                 <div>
                   <span className="text-slate-600 font-medium">Nome: </span>
                   <span className="font-bold text-slate-900">{report.user.name}</span>
@@ -486,7 +482,7 @@ function FolhaPontoContent() {
                   <span className="font-bold text-slate-900">{report.user.position || '—'}</span>
                 </div>
                 <div>
-                  <span className="text-slate-600 font-medium">Total de justificativas: </span>
+                  <span className="text-slate-600 font-medium">Justificativas: </span>
                   <span className="font-bold text-slate-900">{report.justifications.length}</span>
                 </div>
               </div>
@@ -497,13 +493,13 @@ function FolhaPontoContent() {
               <>
                 {/* Seção de retificações aprovadas */}
                 {(report.adjustments || []).length > 0 && (
-                  <div className="border-2 border-cyan-300 rounded-lg p-3 mb-3">
-                    <h3 className="text-[9px] font-bold text-slate-700 uppercase tracking-wider mb-2 flex items-center gap-2">
+                  <div className="border-2 border-cyan-300 rounded-lg p-2 mb-2">
+                    <h3 className="text-[8px] font-bold text-slate-700 uppercase tracking-wider mb-1.5 flex items-center gap-2">
                       📝 Retificações Aprovadas no Período
                     </h3>
-                    <ul className="space-y-1.5 text-[10px]">
+                    <ul className="space-y-1 text-[9px]">
                       {(report.adjustments || []).map((adj: any) => (
-                        <li key={adj.id} className="flex items-start gap-2 pb-1.5 border-b border-cyan-100 last:border-b-0 last:pb-0">
+                        <li key={adj.id} className="flex items-start gap-1.5 pb-1 border-b border-cyan-100 last:border-b-0 last:pb-0">
                           <span className="font-bold">{formatDateBR(adj.entryDate)}</span>
                           <span className="text-slate-500">—</span>
                           <span>
@@ -515,7 +511,7 @@ function FolhaPontoContent() {
                           <span>para</span>
                           <span className="font-mono font-semibold">{formatTimeInBrazil(adj.newValue)}</span>
                           {adj.adjustmentType === 'hr_direct' && (
-                            <span className="text-[9px] bg-purple-100 text-purple-700 px-1 py-0.5 rounded">RH</span>
+                            <span className="text-[8px] bg-purple-100 text-purple-700 px-1 py-0.5 rounded">RH</span>
                           )}
                         </li>
                       ))}
@@ -523,41 +519,38 @@ function FolhaPontoContent() {
                   </div>
                 )}
 
-                <div className="space-y-3">
+                <div className="space-y-2">
                   {report.justifications.map((j, idx) => {
                     const absenceDate = new Date(`${j.justificationDate}T12:00:00-03:00`);
                     const createdAtDate = new Date(j.createdAt);
                     return (
-                      <div key={j.id} className="border-2 border-slate-300 rounded-lg p-3">
-                        <div className="flex items-start justify-between mb-2 pb-2 border-b border-slate-200">
+                      <div key={j.id} className="border-2 border-slate-300 rounded-lg p-2">
+                        <div className="flex items-start justify-between mb-1.5 pb-1.5 border-b border-slate-200">
                           <div className="flex items-start gap-2 flex-1">
-                            <div className="w-8 h-8 bg-slate-900 text-white rounded-full flex items-center justify-center font-bold text-xs flex-shrink-0">
+                            <div className="w-7 h-7 bg-slate-900 text-white rounded-full flex items-center justify-center font-bold text-[10px] flex-shrink-0">
                               {idx + 1}
                             </div>
                             <div className="flex-1">
-                              <p className="font-bold text-slate-900 text-sm mb-1">
+                              <p className="font-bold text-slate-900 text-xs mb-0.5">
                                 Ausência no dia {formatDateBR(j.justificationDate)} ({WEEKDAY_FULL[absenceDate.getDay()]})
                               </p>
-                              <div className="grid grid-cols-2 gap-1.5 text-[10px]">
-                                <div className="bg-amber-50 border border-amber-200 rounded px-1.5 py-1">
-                                  <p className="text-amber-700 font-semibold">📅 Data da AUSÊNCIA</p>
+                              <div className="grid grid-cols-2 gap-1 text-[8px]">
+                                <div className="bg-amber-50 border border-amber-200 rounded px-1 py-0.5">
+                                  <p className="text-amber-700 font-semibold">📅 Data AUSÊNCIA</p>
                                   <p className="text-amber-900 font-bold">
                                     {formatDateBR(j.justificationDate)} (ontem)
                                   </p>
                                 </div>
-                                <div className="bg-blue-50 border border-blue-200 rounded px-1.5 py-1">
-                                  <p className="text-blue-700 font-semibold">✍️ Data da SOLICITAÇÃO</p>
+                                <div className="bg-blue-50 border border-blue-200 rounded px-1 py-0.5">
+                                  <p className="text-blue-700 font-semibold">✍️ Data SOLICITAÇÃO</p>
                                   <p className="text-blue-900 font-bold">
                                     {createdAtDate.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo', day: '2-digit', month: '2-digit', year: 'numeric' })} (hoje)
                                   </p>
                                 </div>
                               </div>
-                              <p className="text-[9px] text-slate-500 mt-1 italic">
-                                Obs.: A ausência ocorreu no dia {formatDateBR(j.justificationDate)}, mas a solicitação foi feita no dia seguinte (hoje), conforme permitido pelas regras do sistema.
-                              </p>
                             </div>
                           </div>
-                          <span className={`text-[10px] font-bold px-2 py-1 rounded-full border flex-shrink-0 ${
+                          <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full border flex-shrink-0 ${
                             j.status === 'approved' ? 'bg-green-100 text-green-800 border-green-300'
                             : j.status === 'rejected' ? 'bg-red-100 text-red-800 border-red-300'
                             : 'bg-yellow-100 text-yellow-800 border-yellow-300'
@@ -566,15 +559,15 @@ function FolhaPontoContent() {
                           </span>
                         </div>
                         <div>
-                          <p className="text-[9px] font-bold text-slate-600 uppercase mb-1">Motivo apresentado pelo servidor:</p>
-                          <p className="text-[10px] text-slate-900 leading-relaxed bg-slate-50 p-2 rounded border border-slate-200">
+                          <p className="text-[8px] font-bold text-slate-600 uppercase mb-0.5">Motivo:</p>
+                          <p className="text-[9px] text-slate-900 leading-relaxed bg-slate-50 p-1.5 rounded border border-slate-200">
                             {j.reason}
                           </p>
                         </div>
                         {j.reviewNotes && (
-                          <div className="mt-2">
-                            <p className="text-[9px] font-bold text-slate-600 uppercase mb-1">Observação do RH:</p>
-                            <p className="text-[10px] text-slate-900 leading-relaxed bg-blue-50 p-2 rounded border border-blue-200">
+                          <div className="mt-1.5">
+                            <p className="text-[8px] font-bold text-slate-600 uppercase mb-0.5">Obs. RH:</p>
+                            <p className="text-[9px] text-slate-900 leading-relaxed bg-blue-50 p-1.5 rounded border border-blue-200">
                               {j.reviewNotes}
                             </p>
                           </div>
@@ -589,13 +582,13 @@ function FolhaPontoContent() {
               <div className="space-y-3">
                 {/* Retificações aprovadas */}
                 {(report.adjustments || []).length > 0 && (
-                  <div className="border-2 border-cyan-300 rounded-lg p-3">
-                    <h3 className="text-[9px] font-bold text-slate-700 uppercase tracking-wider mb-2 flex items-center gap-2">
+                  <div className="border-2 border-cyan-300 rounded-lg p-2">
+                    <h3 className="text-[8px] font-bold text-slate-700 uppercase tracking-wider mb-1.5 flex items-center gap-2">
                       📝 Retificações Aprovadas no Período
                     </h3>
-                    <ul className="space-y-1.5 text-[10px]">
+                    <ul className="space-y-1 text-[9px]">
                       {(report.adjustments || []).map((adj: any) => (
-                        <li key={adj.id} className="flex items-start gap-2 pb-1.5 border-b border-cyan-100 last:border-b-0 last:pb-0">
+                        <li key={adj.id} className="flex items-start gap-1.5 pb-1 border-b border-cyan-100 last:border-b-0 last:pb-0">
                           <span className="font-bold">{formatDateBR(adj.entryDate)}</span>
                           <span className="text-slate-500">—</span>
                           <span>
@@ -607,7 +600,7 @@ function FolhaPontoContent() {
                           <span>para</span>
                           <span className="font-mono font-semibold">{formatTimeInBrazil(adj.newValue)}</span>
                           {adj.adjustmentType === 'hr_direct' && (
-                            <span className="text-[9px] bg-purple-100 text-purple-700 px-1 py-0.5 rounded">RH</span>
+                            <span className="text-[8px] bg-purple-100 text-purple-700 px-1 py-0.5 rounded">RH</span>
                           )}
                         </li>
                       ))}
@@ -616,20 +609,20 @@ function FolhaPontoContent() {
                 )}
 
                 {(report.occurrences.length > 0 || report.absences.length > 0) && (
-                  <div className="space-y-2">
+                  <div className="space-y-1.5">
                     {report.occurrences.length > 0 && (
-                      <div className="border-2 border-orange-300 rounded-lg p-3">
-                        <h3 className="text-[9px] font-bold text-slate-700 uppercase tracking-wider mb-2">
-                          🎉 Feriados e Ocorrências no Período
+                      <div className="border-2 border-orange-300 rounded-lg p-2">
+                        <h3 className="text-[8px] font-bold text-slate-700 uppercase tracking-wider mb-1">
+                          🎉 Feriados e Ocorrências
                         </h3>
-                        <ul className="space-y-1 text-[10px]">
+                        <ul className="space-y-0.5 text-[9px]">
                           {report.occurrences.map((o) => (
-                            <li key={o.id} className="flex items-center gap-2 flex-wrap">
+                            <li key={o.id} className="flex items-center gap-1.5 flex-wrap">
                               <span className="font-bold">{formatDateBR(o.occurrenceDate)}</span>
                               <span className="text-slate-500">—</span>
                               <span>{o.type === 'holiday' ? '🎉 Feriado' : o.type === 'optional_point' ? '⚠️ Ponto Facultativo' : '🏫 Dia sem Aula'}</span>
                               <span className="font-semibold">: {o.name}</span>
-                              <span className="text-[9px] text-slate-500">({o.scope === 'national' ? 'Nacional' : o.scope === 'state' ? 'Estadual' : o.scope === 'municipal' ? 'Municipal' : 'Escolar'})</span>
+                              <span className="text-[8px] text-slate-500">({o.scope === 'national' ? 'Nacional' : o.scope === 'state' ? 'Estadual' : o.scope === 'municipal' ? 'Municipal' : 'Escolar'})</span>
                             </li>
                           ))}
                         </ul>
@@ -637,11 +630,11 @@ function FolhaPontoContent() {
                     )}
 
                     {report.absences.length > 0 && (
-                      <div className="border-2 border-purple-300 rounded-lg p-3">
-                        <h3 className="text-[9px] font-bold text-slate-700 uppercase tracking-wider mb-2">
-                          🚫 Períodos de Afastamento (servidor impedido de registrar ponto)
+                      <div className="border-2 border-purple-300 rounded-lg p-2">
+                        <h3 className="text-[8px] font-bold text-slate-700 uppercase tracking-wider mb-1">
+                          🚫 Afastamentos (impedido de registrar ponto)
                         </h3>
-                        <ul className="space-y-1 text-[10px]">
+                        <ul className="space-y-0.5 text-[9px]">
                           {report.absences.map((a) => {
                             const nameMap: Record<string, string> = {
                               vacation: 'Férias',
@@ -656,10 +649,10 @@ function FolhaPontoContent() {
                               other: 'Afastamento',
                             };
                             return (
-                              <li key={a.id} className="flex items-center gap-2 flex-wrap">
+                              <li key={a.id} className="flex items-center gap-1.5 flex-wrap">
                                 <span className="font-semibold">🚫 {nameMap[a.type] || 'Afastamento'}</span>
-                                <span>de {formatDateBR(a.startDate)} a {formatDateBR(a.endDate)}</span>
-                                {a.documentRef && <span className="text-[9px] text-slate-500">(Doc: {a.documentRef})</span>}
+                                <span>{formatDateBR(a.startDate)} a {formatDateBR(a.endDate)}</span>
+                                {a.documentRef && <span className="text-[8px] text-slate-500">(Doc: {a.documentRef})</span>}
                               </li>
                             );
                           })}
@@ -674,31 +667,31 @@ function FolhaPontoContent() {
             {/* Declaração e assinaturas - apenas quando há justificativas */}
             {report.justifications.length > 0 && (
               <>
-                <div className="mt-4 border-2 border-slate-900 rounded-lg p-3 bg-slate-50">
-                  <p className="text-[10px] text-slate-700 leading-relaxed">
+                <div className="mt-3 border-2 border-slate-900 rounded-lg p-2 bg-slate-50">
+                  <p className="text-[9px] text-slate-700 leading-relaxed">
                     <strong>DECLARAÇÃO:</strong> Declaro que as justificativas acima foram analisadas pelo setor de Recursos Humanos da EE Profa. Marlene Frattini, conforme documentação apresentada e em conformidade com as normas internas da instituição.
                   </p>
                 </div>
 
-                <div className="grid grid-cols-2 gap-6 mt-6 pt-4">
+                <div className="grid grid-cols-2 gap-6 mt-4 pt-3">
                   <div className="text-center">
                     <div className="border-t border-slate-900 pt-1">
                       <p className="text-[10px] font-bold text-slate-900">____________________________________</p>
-                      <p className="text-[9px] text-slate-600">Responsável pelo RH</p>
+                      <p className="text-[9px] text-slate-600">Diretor de Escola</p>
                       <p className="text-[9px] text-slate-600">EE Profa. Marlene Frattini</p>
                     </div>
                   </div>
                   <div className="text-center">
                     <div className="border-t border-slate-900 pt-1">
                       <p className="text-[10px] font-bold text-slate-900">____________________________________</p>
-                      <p className="text-[9px] text-slate-600">Diretor(a) da Unidade Escolar</p>
+                      <p className="text-[9px] text-slate-600">Responsável pelo RH</p>
                     </div>
                   </div>
                 </div>
               </>
             )}
 
-            <div className="mt-4 text-center text-[9px] text-slate-500 border-t border-slate-200 pt-2">
+            <div className="mt-3 text-center text-[8px] text-slate-500 border-t border-slate-200 pt-1.5">
               Documento gerado eletronicamente em {new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })} · Sistema de Ponto Eletrônico EE Profa. Marlene Frattini
             </div>
         </div>

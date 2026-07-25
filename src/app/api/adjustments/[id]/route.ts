@@ -10,7 +10,14 @@ type Context = { params: Promise<{ id: string }> };
 export async function PATCH(_req: Request, { params }: Context) {
   try {
     const session = await getSession();
-    if (!session || session.role !== 'hr') {
+    
+    if (!session) {
+      console.error('PATCH /api/adjustments/[id] - Usuário não autenticado');
+      return NextResponse.json({ error: 'Não autenticado' }, { status: 401 });
+    }
+    
+    if (session.role !== 'hr') {
+      console.error('PATCH /api/adjustments/[id] - Usuário não é RH:', session.role);
       return NextResponse.json({ error: 'Sem permissão. Apenas RH pode analisar retificações.' }, { status: 403 });
     }
 
@@ -110,9 +117,16 @@ export async function PATCH(_req: Request, { params }: Context) {
         ? 'Retificação aprovada e aplicada com sucesso!'
         : 'Retificação rejeitada.',
     });
-  } catch (error) {
-    console.error('Erro ao analisar retificação:', error);
-    return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
+  } catch (error: any) {
+    console.error('Erro ao analisar retificação:', {
+      message: error?.message,
+      stack: error?.stack,
+      error: error
+    });
+    return NextResponse.json({ 
+      error: 'Erro interno', 
+      details: error?.message || 'Erro desconhecido' 
+    }, { status: 500 });
   }
 }
 
@@ -130,8 +144,15 @@ export async function DELETE(_req: Request, { params }: Context) {
     await db.delete(timeEntryAdjustments).where(eq(timeEntryAdjustments.id, adjustmentId));
 
     return NextResponse.json({ message: 'Retificação removida!' });
-  } catch (error) {
-    console.error('Erro ao remover retificação:', error);
-    return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
+  } catch (error: any) {
+    console.error('Erro ao remover retificação:', {
+      message: error?.message,
+      stack: error?.stack,
+      error: error
+    });
+    return NextResponse.json({ 
+      error: 'Erro interno',
+      details: error?.message || 'Erro desconhecido'
+    }, { status: 500 });
   }
 }

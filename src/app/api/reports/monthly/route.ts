@@ -113,18 +113,24 @@ export async function GET(request: Request) {
       .orderBy(asc(serverAbsences.startDate));
 
     // Busca retificações aprovadas do mês (para visualização na folha ponto)
-    const monthAdjustments = await db
-      .select()
-      .from(timeEntryAdjustments)
-      .where(
-        and(
-          eq(timeEntryAdjustments.userId, targetUserId),
-          eq(timeEntryAdjustments.status, 'approved'),
-          gte(timeEntryAdjustments.entryDate, startDate),
-          lte(timeEntryAdjustments.entryDate, endDate)
+    let monthAdjustments: any[] = [];
+    try {
+      monthAdjustments = await db
+        .select()
+        .from(timeEntryAdjustments)
+        .where(
+          and(
+            eq(timeEntryAdjustments.userId, targetUserId),
+            eq(timeEntryAdjustments.status, 'approved'),
+            gte(timeEntryAdjustments.entryDate, startDate),
+            lte(timeEntryAdjustments.entryDate, endDate)
+          )
         )
-      )
-      .orderBy(asc(timeEntryAdjustments.entryDate));
+        .orderBy(asc(timeEntryAdjustments.entryDate));
+    } catch (adjustmentError) {
+      console.warn('Erro ao buscar retificações (tabela pode não existir):', adjustmentError);
+      monthAdjustments = [];
+    }
 
     // Gerar lista completa de dias do mês com status
     type DayType = {
