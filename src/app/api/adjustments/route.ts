@@ -12,15 +12,22 @@ const VALID_FIELDS = ['checkIn', 'lunchOut', 'lunchIn', 'checkOut'];
 // - RH: todas ou filtradas por userId
 export async function GET(request: Request) {
   try {
+    console.log('[ADJUSTMENTS GET] Iniciando listagem de retificações');
+    
     const session = await getSession();
     if (!session) {
+      console.log('[ADJUSTMENTS GET] Usuário não autenticado');
       return NextResponse.json({ error: 'Não autenticado' }, { status: 401 });
     }
+
+    console.log('[ADJUSTMENTS GET] Usuário autenticado:', { userId: session.userId, role: session.role });
 
     const { searchParams } = new URL(request.url);
     const userIdParam = searchParams.get('userId');
     const statusParam = searchParams.get('status');
     const monthParam = searchParams.get('month');
+
+    console.log('[ADJUSTMENTS GET] Parâmetros:', { userIdParam, statusParam, monthParam });
 
     const whereClauses = [];
 
@@ -43,6 +50,8 @@ export async function GET(request: Request) {
       whereClauses.push(gte(timeEntryAdjustments.entryDate, startDate));
       whereClauses.push(lte(timeEntryAdjustments.entryDate, endDate));
     }
+
+    console.log('[ADJUSTMENTS GET] Executando query com', whereClauses.length, 'cláusulas WHERE');
 
     const query = db
       .select({
@@ -71,16 +80,19 @@ export async function GET(request: Request) {
       ? await query.where(and(...whereClauses)).orderBy(desc(timeEntryAdjustments.createdAt))
       : await query.orderBy(desc(timeEntryAdjustments.createdAt));
 
+    console.log('[ADJUSTMENTS GET] Query executada com sucesso. Resultados:', results.length);
+
     return NextResponse.json({ adjustments: results });
   } catch (error: any) {
-    console.error('Erro ao listar retificações:', {
+    console.error('[ADJUSTMENTS GET ERROR]', {
       message: error?.message,
       stack: error?.stack,
-      error: error
+      error: error,
+      timestamp: new Date().toISOString()
     });
     return NextResponse.json({ 
-      error: 'Erro interno',
-      details: error?.message || 'Erro desconhecido'
+      error: 'Erro interno ao listar retificações',
+      details: process.env.NODE_ENV === 'development' ? error?.message : undefined
     }, { status: 500 });
   }
 }
@@ -88,16 +100,24 @@ export async function GET(request: Request) {
 // POST: criar retificação (servidor solicita OU RH cria direto)
 export async function POST(request: Request) {
   try {
+    console.log('[ADJUSTMENTS POST] Iniciando criação de retificação');
+    
     const session = await getSession();
     if (!session) {
+      console.log('[ADJUSTMENTS POST] Usuário não autenticado');
       return NextResponse.json({ error: 'Não autenticado' }, { status: 401 });
     }
 
+    console.log('[ADJUSTMENTS POST] Usuário autenticado:', { userId: session.userId, role: session.role });
+
     const body = await request.json();
+    console.log('[ADJUSTMENTS POST] Dados recebidos:', body);
+
     const { entryDate, fieldAltered, oldValue, newValue, reason, userId, adjustmentType } = body;
 
     // Validações
     if (!entryDate || !fieldAltered || !reason) {
+      console.log('[ADJUSTMENTS POST] Dados obrigatórios faltando');
       return NextResponse.json(
         { error: 'Data, campo e motivo são obrigatórios' },
         { status: 400 }
@@ -105,6 +125,7 @@ export async function POST(request: Request) {
     }
 
     if (!VALID_FIELDS.includes(fieldAltered)) {
+      console.log('[ADJUSTMENTS POST] Campo inválido:', fieldAltered);
       return NextResponse.json(
         { error: 'Campo inválido. Deve ser: checkIn, lunchOut, lunchIn ou checkOut' },
         { status: 400 }
@@ -112,6 +133,7 @@ export async function POST(request: Request) {
     }
 
     if (reason.trim().length < 10) {
+      console.log('[ADJUSTMENTS POST] Motivo muito curto');
       return NextResponse.json(
         { error: 'O motivo deve ter pelo menos 10 caracteres' },
         { status: 400 }
@@ -121,6 +143,7 @@ export async function POST(request: Request) {
     // Validar data
     const today = getCurrentBrazilDate();
     if (entryDate > today) {
+      console.log('[ADJUSTMENTS POST] Data futura não permitida');
       return NextResponse.json(
         { error: 'Não é possível solicitar retificação para data futura' },
         { status: 400 }
@@ -136,7 +159,10 @@ export async function POST(request: Request) {
       targetUserId = parseInt(userId, 10);
     }
 
+    console.log('[ADJUSTMENTS POST] targetUserId:', targetUserId);
+
     // Buscar o registro do dia
+    console.log('[ADJUSTMENTS POST] Buscando registro do dia...');
     const existingEntry = await db
       .select()
       .from(timeEntries)
@@ -146,9 +172,12 @@ export async function POST(request: Request) {
       ))
       .then((rows) => rows[0]);
 
+    console.log('[ADJUSTMENTS POST] existingEntry:', existingEntry);
+
     // Se não existe registro, criar um primeiro
     let timeEntryId = existingEntry?.id;
     if (!existingEntry) {
+      console.log('[ADJUSTMENTS POST] Criando novo registro de ponto...');
       const [newEntry] = await db
         .insert(timeEntries)
         .values({
@@ -157,20 +186,31 @@ export async function POST(request: Request) {
         })
         .returning();
       timeEntryId = newEntry.id;
+      console.log('[ADJUSTMENTS POST] Novo registro criado com ID:', timeEntryId);
+    }
+
+    if (!timeEntryId) {
+      console.error('[ADJUSTMENTS POST] ERRO: timeEntryId é null ou undefined!');
+      return NextResponse.json(
+        { error: 'Erro ao criar registro de ponto' },
+        { status: 500 }
+      );
     }
 
     // Verifica se já existe solicitação pendente para este campo
+    console.log('[ADJUSTMENTS POST] Verificando solicitações pendentes...');
     const existingPending = await db
       .select()
       .from(timeEntryAdjustments)
       .where(and(
-        eq(timeEntryAdjustments.timeEntryId, timeEntryId!),
+        eq(timeEntryAdjustments.timeEntryId, timeEntryId),
         eq(timeEntryAdjustments.fieldAltered, fieldAltered),
         eq(timeEntryAdjustments.status, 'pending')
       ))
       .then((rows) => rows[0]);
 
     if (existingPending) {
+      console.log('[ADJUSTMENTS POST] Já existe solicitação pendente');
       return NextResponse.json(
         { error: 'Já existe uma solicitação pendente para este campo' },
         { status: 400 }
@@ -192,6 +232,7 @@ export async function POST(request: Request) {
     };
 
     if (session.role === 'hr' && adjustmentType === 'hr_direct') {
+      console.log('[ADJUSTMENTS POST] RH fazendo correção direta');
       finalType = 'hr_direct';
       status = 'approved';
       approvedById = session.userId;
@@ -203,25 +244,30 @@ export async function POST(request: Request) {
         // Converter hora para timestamp completo
         const timestamp = timeToTimestamp(newValue, entryDate);
         updateData[fieldAltered] = timestamp;
+        console.log('[ADJUSTMENTS POST] Atualizando campo:', fieldAltered, 'para:', timestamp);
       } else {
         updateData[fieldAltered] = null;
+        console.log('[ADJUSTMENTS POST] Limpando campo:', fieldAltered);
       }
       updateData.updatedAt = new Date();
 
+      console.log('[ADJUSTMENTS POST] Atualizando timeEntry ID:', timeEntryId);
       await db
         .update(timeEntries)
         .set(updateData)
-        .where(eq(timeEntries.id, timeEntryId!));
+        .where(eq(timeEntries.id, timeEntryId));
+      console.log('[ADJUSTMENTS POST] TimeEntry atualizado com sucesso');
     }
 
     // Para o insert na tabela de ajustes, salvar o timestamp completo
     const newValueTimestamp = newValue ? timeToTimestamp(newValue, entryDate) : null;
     const oldValueTimestamp = oldValue ? timeToTimestamp(oldValue, entryDate) : null;
 
+    console.log('[ADJUSTMENTS POST] Inserindo retificação no banco...');
     const [adjustment] = await db
       .insert(timeEntryAdjustments)
       .values({
-        timeEntryId: timeEntryId!,
+        timeEntryId,
         entryDate,
         userId: targetUserId,
         fieldAltered,
@@ -236,20 +282,23 @@ export async function POST(request: Request) {
       })
       .returning();
 
+    console.log('[ADJUSTMENTS POST] Retificação criada com sucesso:', adjustment.id);
+
     const message = session.role === 'hr' && adjustmentType === 'hr_direct'
       ? 'Retificação aplicada diretamente com sucesso!'
       : 'Solicitação de retificação enviada! Aguardando análise do RH.';
 
     return NextResponse.json({ adjustment, message }, { status: 201 });
   } catch (error: any) {
-    console.error('Erro ao criar retificação:', {
+    console.error('[ADJUSTMENTS POST ERROR]', {
       message: error?.message,
       stack: error?.stack,
-      error: error
+      error: error,
+      timestamp: new Date().toISOString()
     });
     return NextResponse.json({ 
-      error: 'Erro interno',
-      details: error?.message || 'Erro desconhecido'
+      error: 'Erro interno ao criar retificação',
+      details: process.env.NODE_ENV === 'development' ? error?.message : undefined
     }, { status: 500 });
   }
 }
