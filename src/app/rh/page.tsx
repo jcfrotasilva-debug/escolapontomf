@@ -424,6 +424,14 @@ function HrContent() {
             highlight
           />
           <QuickActionCard
+            icon={<AlertCircle className="w-5 h-5" />}
+            title="⚠️ Registros Parciais"
+            description="Servidores presentes com horários faltantes"
+            onClick={() => router.push('/rh/monitoramento-parcial')}
+            color="yellow"
+            highlight
+          />
+          <QuickActionCard
             icon={<Clock className="w-5 h-5" />}
             title="⏰ Horários"
             description="Cadastre horários de TODOS os servidores"
