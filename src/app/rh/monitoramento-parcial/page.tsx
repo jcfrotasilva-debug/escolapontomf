@@ -64,24 +64,15 @@ function PartialMonitoringContent() {
   async function fetchStatus() {
     setLoading(true);
     try {
-      const serversRes = await fetch('/api/employees');
-      if (!serversRes.ok) throw new Error('Erro ao buscar servidores');
-      const serversData = await serversRes.json();
-      const activeServers = serversData.users.filter((s: any) => s.role === 'server' && s.active);
+      const res = await fetch('/api/monitoring');
+      if (!res.ok) throw new Error('Erro ao buscar monitoramento');
+      const data = await res.json();
 
-      const today = getCurrentBrazilDate();
-      const entriesRes = await fetch(`/api/time-entries/history?month=${today.slice(0, 7)}`);
-      if (!entriesRes.ok) throw new Error('Erro ao buscar registros');
-      const entriesData = await entriesRes.json();
-      const todayEntries = entriesData.entries.filter((e: any) => e.entryDate === today);
-
-      const serverStatus: ServerStatus[] = activeServers.map((server: any) => {
-        const entry = todayEntries.find((e: any) => e.userId === server.id);
-        
-        const checkIn = entry?.checkIn || null;
-        const lunchOut = entry?.lunchOut || null;
-        const lunchIn = entry?.lunchIn || null;
-        const checkOut = entry?.checkOut || null;
+      const serverStatus: ServerStatus[] = data.monitoring.map((m: any) => {
+        const checkIn = m.checkIn || null;
+        const lunchOut = m.lunchOut || null;
+        const lunchIn = m.lunchIn || null;
+        const checkOut = m.checkOut || null;
         
         const complete = !!(checkIn && lunchOut && lunchIn && checkOut);
         const partial = !!(checkIn || lunchOut || lunchIn || checkOut);
@@ -93,11 +84,11 @@ function PartialMonitoringContent() {
         if (!checkOut) missing.push('Saída');
         
         return {
-          id: server.id,
-          name: server.name,
-          position: server.position,
-          registration: server.registration,
-          department: server.department,
+          id: m.id,
+          name: m.name,
+          position: m.position,
+          registration: m.registration,
+          department: m.department,
           checkIn,
           lunchOut,
           lunchIn,

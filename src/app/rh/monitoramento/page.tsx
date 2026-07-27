@@ -62,35 +62,22 @@ function MonitoringContent() {
   async function fetchStatus() {
     setLoading(true);
     try {
-      // Buscar todos os servidores ativos
-      const serversRes = await fetch('/api/employees');
-      if (!serversRes.ok) throw new Error('Erro ao buscar servidores');
-      const serversData = await serversRes.json();
-      const activeServers = serversData.users.filter((s: any) => s.role === 'server' && s.active);
+      const res = await fetch('/api/monitoring');
+      if (!res.ok) throw new Error('Erro ao buscar monitoramento');
+      const data = await res.json();
 
-      // Buscar registros do dia
-      const today = getCurrentBrazilDate();
-      const entriesRes = await fetch(`/api/time-entries/history?month=${today.slice(0, 7)}`);
-      if (!entriesRes.ok) throw new Error('Erro ao buscar registros');
-      const entriesData = await entriesRes.json();
-      const todayEntries = entriesData.entries.filter((e: any) => e.entryDate === today);
-
-      // Combinar dados
-      const serverStatus: ServerStatus[] = activeServers.map((server: any) => {
-        const entry = todayEntries.find((e: any) => e.userId === server.id);
-        return {
-          id: server.id,
-          name: server.name,
-          position: server.position,
-          registration: server.registration,
-          department: server.department,
-          registered: !!entry,
-          checkIn: entry?.checkIn || null,
-          lunchOut: entry?.lunchOut || null,
-          lunchIn: entry?.lunchIn || null,
-          checkOut: entry?.checkOut || null,
-        };
-      });
+      const serverStatus: ServerStatus[] = data.monitoring.map((m: any) => ({
+        id: m.id,
+        name: m.name,
+        position: m.position,
+        registration: m.registration,
+        department: m.department,
+        registered: m.hasAnyRecord,
+        checkIn: m.checkIn,
+        lunchOut: m.lunchOut,
+        lunchIn: m.lunchIn,
+        checkOut: m.checkOut,
+      }));
 
       setServers(serverStatus);
     } catch (error) {
