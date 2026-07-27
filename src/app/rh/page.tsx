@@ -38,6 +38,10 @@ type ServerUser = {
   role: string;
   position: string | null;
   registration: string | null;
+  rg: string | null;
+  workHours: number | null;
+  regime: string | null;
+  isStudentSchedule: boolean | null;
   department: string | null;
   admissionDate: string | null;
   phone: string | null;
@@ -413,6 +417,14 @@ function HrContent() {
         <div className="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <QuickActionCard
             icon={<Clock className="w-5 h-5" />}
+            title="📊 Monitoramento"
+            description="Servidores sem registro hoje"
+            onClick={() => router.push('/rh/monitoramento')}
+            color="red"
+            highlight
+          />
+          <QuickActionCard
+            icon={<Clock className="w-5 h-5" />}
             title="⏰ Horários"
             description="Cadastre horários de TODOS os servidores"
             onClick={() => router.push('/rh/horarios')}
@@ -588,6 +600,10 @@ function ServerFormModal({
     confirmPassword: '',
     position: server?.position || '',
     registration: server?.registration || '',
+    rg: server?.rg || '',
+    workHours: server?.workHours || 40,
+    regime: server?.regime || '',
+    isStudentSchedule: server?.isStudentSchedule || false,
     department: server?.department || '',
     phone: server?.phone || '',
     admissionDate: server?.admissionDate || '',
@@ -722,6 +738,53 @@ function ServerFormModal({
                 onChange={(e) => setForm({ ...form, registration: e.target.value })}
                 className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-1.5">RG</label>
+              <input
+                type="text"
+                value={form.rg}
+                onChange={(e) => setForm({ ...form, rg: e.target.value })}
+                placeholder="Ex: 59.546.181-X"
+                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-1.5">Jornada de Trabalho (horas)</label>
+              <input
+                type="number"
+                value={form.workHours}
+                onChange={(e) => setForm({ ...form, workHours: parseFloat(e.target.value) })}
+                min="0"
+                max="44"
+                step="0.5"
+                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-1.5">Regime de Trabalho</label>
+              <select
+                value={form.regime}
+                onChange={(e) => setForm({ ...form, regime: e.target.value })}
+                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">Selecione...</option>
+                <option value="Normal">Normal</option>
+                <option value="Plantão">Plantão</option>
+                <option value="Horista">Horista</option>
+                <option value="Tempo Parcial">Tempo Parcial</option>
+              </select>
+            </div>
+            <div className="sm:col-span-2">
+              <label className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={form.isStudentSchedule}
+                  onChange={(e) => setForm({ ...form, isStudentSchedule: e.target.checked })}
+                  className="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                />
+                <span className="text-sm font-semibold text-slate-700">Horário de Estudante</span>
+              </label>
             </div>
             <div>
               <label className="block text-sm font-semibold text-slate-700 mb-1.5">Departamento/Setor</label>

@@ -57,7 +57,7 @@ export async function PUT(_req: Request, { params }: Context) {
     const userId = parseInt(id, 10);
     const data = await _req.json();
 
-    const { name, email, position, registration, department, admissionDate, phone, password, role } = data;
+    const { name, email, position, registration, rg, workHours, regime, isStudentSchedule, department, admissionDate, phone, password, role } = data;
 
     // Se mudar email, verificar duplicado
     if (email) {
@@ -77,6 +77,10 @@ export async function PUT(_req: Request, { params }: Context) {
       ...(email !== undefined && { email: email.toLowerCase().trim() }),
       ...(position !== undefined && { position: position || null }),
       ...(registration !== undefined && { registration: registration || null }),
+      ...(rg !== undefined && { rg: rg || null }),
+      ...(workHours !== undefined && { workHours: workHours || 40 }),
+      ...(regime !== undefined && { regime: regime || null }),
+      ...(isStudentSchedule !== undefined && { isStudentSchedule: isStudentSchedule || false }),
       ...(department !== undefined && { department: department || null }),
       ...(admissionDate !== undefined && { admissionDate: admissionDate || null }),
       ...(phone !== undefined && { phone: phone || null }),
@@ -98,6 +102,10 @@ export async function PUT(_req: Request, { params }: Context) {
         role: users.role,
         position: users.position,
         registration: users.registration,
+        rg: users.rg,
+        workHours: users.workHours,
+        regime: users.regime,
+        isStudentSchedule: users.isStudentSchedule,
         department: users.department,
         admissionDate: users.admissionDate,
         phone: users.phone,

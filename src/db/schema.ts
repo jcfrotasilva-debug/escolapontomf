@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, varchar, boolean, integer, date, time } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, varchar, boolean, integer, date, time, real } from 'drizzle-orm/pg-core';
 
 export const users = pgTable('users', {
   id: integer('id').primaryKey().generatedAlwaysAsIdentity(),
@@ -8,6 +8,10 @@ export const users = pgTable('users', {
   role: varchar('role', { length: 20 }).notNull().default('server'), // 'server' ou 'hr'
   position: text('position'), // Cargo/função
   registration: varchar('registration', { length: 50 }), // Matrícula
+  rg: varchar('rg', { length: 20 }), // RG
+  workHours: real('work_hours').default(40), // Jornada de trabalho em horas
+  regime: text('regime'), // Regime de trabalho (Plantão, Normal, etc)
+  isStudentSchedule: boolean('is_student_schedule').default(false), // Horário de estudante
   department: text('department'), // Setor/Departamento
   admissionDate: date('admission_date'), // Data de admissão
   phone: varchar('phone', { length: 20 }), // Telefone

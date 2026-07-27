@@ -48,7 +48,7 @@ export async function POST(request: Request) {
     }
 
     const data = await request.json();
-    const { name, email, password, role, position, registration, department, admissionDate, phone } = data;
+    const { name, email, password, role, position, registration, rg, workHours, regime, isStudentSchedule, department, admissionDate, phone } = data;
 
     if (!name || !email || !password) {
       return NextResponse.json(
@@ -82,6 +82,10 @@ export async function POST(request: Request) {
         role: role || 'server',
         position: position || null,
         registration: registration || null,
+        rg: rg || null,
+        workHours: workHours || 40,
+        regime: regime || null,
+        isStudentSchedule: isStudentSchedule || false,
         department: department || null,
         admissionDate: admissionDate || null,
         phone: phone || null,
@@ -94,6 +98,10 @@ export async function POST(request: Request) {
         role: users.role,
         position: users.position,
         registration: users.registration,
+        rg: users.rg,
+        workHours: users.workHours,
+        regime: users.regime,
+        isStudentSchedule: users.isStudentSchedule,
         department: users.department,
         admissionDate: users.admissionDate,
         phone: users.phone,

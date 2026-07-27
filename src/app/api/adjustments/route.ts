@@ -72,9 +72,16 @@ export async function GET(request: Request) {
       : await query.orderBy(desc(timeEntryAdjustments.createdAt));
 
     return NextResponse.json({ adjustments: results });
-  } catch (error) {
-    console.error('Erro ao listar retificações:', error);
-    return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
+  } catch (error: any) {
+    console.error('Erro ao listar retificações:', {
+      message: error?.message,
+      stack: error?.stack,
+      error: error
+    });
+    return NextResponse.json({ 
+      error: 'Erro interno',
+      details: error?.message || 'Erro desconhecido'
+    }, { status: 500 });
   }
 }
 
@@ -234,8 +241,15 @@ export async function POST(request: Request) {
       : 'Solicitação de retificação enviada! Aguardando análise do RH.';
 
     return NextResponse.json({ adjustment, message }, { status: 201 });
-  } catch (error) {
-    console.error('Erro ao criar retificação:', error);
-    return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
+  } catch (error: any) {
+    console.error('Erro ao criar retificação:', {
+      message: error?.message,
+      stack: error?.stack,
+      error: error
+    });
+    return NextResponse.json({ 
+      error: 'Erro interno',
+      details: error?.message || 'Erro desconhecido'
+    }, { status: 500 });
   }
 }

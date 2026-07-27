@@ -20,6 +20,10 @@ type ReportData = {
     name: string;
     position: string | null;
     registration: string | null;
+    rg: string | null;
+    workHours: number | null;
+    regime: string | null;
+    isStudentSchedule: boolean | null;
     department: string | null;
     admissionDate: string | null;
   };
@@ -61,6 +65,15 @@ type ReportData = {
     endDate: string;
     reason: string | null;
     documentRef: string | null;
+  }>;
+  schedules: Array<{
+    id: number;
+    weekday: number;
+    checkInTime: string | null;
+    lunchOutTime: string | null;
+    lunchInTime: string | null;
+    checkOutTime: string | null;
+    isWorkday: boolean;
   }>;
   adjustments: Array<{
     id: number;
@@ -284,37 +297,92 @@ function FolhaPontoContent() {
           </div>
 
           {/* Dados do servidor */}
-          <div className="border border-slate-900 rounded p-1 mb-1">
-            <h3 className="text-[7px] font-bold text-slate-700 uppercase tracking-wider mb-0.5">Dados do Servidor</h3>
-            <div className="grid grid-cols-2 gap-x-2 gap-y-0.5 text-[9px]">
+          <div className="border border-slate-900 rounded p-1.5 mb-1.5">
+            <div className="grid grid-cols-2 gap-x-2 gap-y-0.5 text-[10px]">
               <div>
-                <span className="text-slate-600 font-medium">Nome: </span>
-                <span className="font-bold text-slate-900">{report.user.name}</span>
+                <span className="font-bold text-slate-900">SERVIDOR:</span>{' '}
+                <span className="text-slate-700">{report.user.name}</span>
+                {report.user.registration && <span className="ml-2 text-slate-600">RG: {report.user.registration}</span>}
               </div>
               <div>
-                <span className="text-slate-600 font-medium">Matrícula: </span>
-                <span className="font-bold text-slate-900">{report.user.registration || '—'}</span>
+                <span className="font-bold text-slate-900">CARGO/FUNÇÃO:</span>{' '}
+                <span className="text-slate-700">{report.user.position || '—'}</span>
               </div>
               <div>
-                <span className="text-slate-600 font-medium">Cargo: </span>
-                <span className="font-bold text-slate-900">{report.user.position || '—'}</span>
+                <span className="font-bold text-slate-900">JORNADA DE TRABALHO:</span>{' '}
+                <span className="text-slate-700">{report.user.workHours || 40}:00 Horas</span>
+                <span className="ml-2 font-bold text-slate-900">REGIME:</span>{' '}
+                <span className="text-slate-700">{report.user.regime || '—'}</span>
               </div>
               <div>
-                <span className="text-slate-600 font-medium">Setor: </span>
-                <span className="font-bold text-slate-900">{report.user.department || '—'}</span>
+                <span className="font-bold text-slate-900">HORÁRIO DE ESTUDANTE:</span>{' '}
+                <span className="text-slate-700">{report.user.isStudentSchedule ? 'Sim' : 'Não'}</span>
               </div>
-              <div>
-                <span className="text-slate-600 font-medium">Período: </span>
-                <span className="font-bold text-slate-900">
-                  {formatDateBR(report.month.startDate)} a {formatDateBR(report.month.endDate)}
-                </span>
-              </div>
-              <div>
-                <span className="text-slate-600 font-medium">Admissão: </span>
-                <span className="font-bold text-slate-900">
-                  {report.user.admissionDate ? formatDateBR(report.user.admissionDate) : '—'}
-                </span>
-              </div>
+            </div>
+          </div>
+
+          {/* Horário de trabalho */}
+          <div className="border border-slate-900 rounded p-1.5 mb-1.5 bg-slate-50">
+            <h3 className="text-[9px] font-bold text-slate-800 uppercase tracking-wider mb-1">HORÁRIO DE TRABALHO</h3>
+            <div className="text-[9px] text-slate-700">
+              {(() => {
+                const schedules = report.schedules || [];
+                const workingDays = schedules.filter((s: any) => s.isWorkday);
+                if (workingDays.length === 0) {
+                  return 'Nenhum horário cadastrado';
+                }
+                
+                // Função para formatar horário no formato HH:MM:SS ou HH:MM
+                const formatTimeValue = (time: string | null): string => {
+                  if (!time) return '--:--';
+                  // Extrair HH:MM de "HH:MM:SS" ou "HH:MM"
+                  const parts = time.split(':');
+                  if (parts.length >= 2) {
+                    return `${parts[0]}:${parts[1]}`;
+                  }
+                  return time;
+                };
+                
+                // Agrupar por horário
+                const timeGroups: Record<string, number[]> = {};
+                workingDays.forEach((s: any) => {
+                  const timeKey = `${formatTimeValue(s.checkInTime)} às ${formatTimeValue(s.checkOutTime)}`;
+                  if (!timeGroups[timeKey]) timeGroups[timeKey] = [];
+                  timeGroups[timeKey].push(s.weekday);
+                });
+                
+                const dayNames = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+                const scheduleText = Object.entries(timeGroups).map(([time, days]) => {
+                  const dayList = days.map((d: number) => dayNames[d]).join(', ');
+                  return `${dayList} (${time})`;
+                }).join(' / ');
+                
+                // Adicionar horário de almoço se houver
+                const lunchGroups: Record<string, number[]> = {};
+                workingDays
+                  .filter((s: any) => s.lunchOutTime && s.lunchInTime)
+                  .forEach((s: any) => {
+                    const lunchTime = `${formatTimeValue(s.lunchOutTime)} às ${formatTimeValue(s.lunchInTime)}`;
+                    if (!lunchGroups[lunchTime]) lunchGroups[lunchTime] = [];
+                    lunchGroups[lunchTime].push(s.weekday);
+                  });
+                
+                const lunchText = Object.entries(lunchGroups).map(([time, days]) => {
+                  const dayList = days.map((d: number) => dayNames[d]).join(', ');
+                  return `${dayList} (${time})`;
+                }).join(' / ');
+                
+                let result = scheduleText;
+                if (lunchText.length > 0) {
+                  result += `\nINTERVALO DE ALMOÇO: ${lunchText}`;
+                }
+                
+                return result;
+              })()}
+            </div>
+            <div className="text-[8px] text-slate-600 mt-1">
+              <span className="font-bold">PERÍODO:</span>{' '}
+              {formatDateBR(report.month.startDate)} a {formatDateBR(report.month.endDate)}
             </div>
           </div>
 
@@ -326,13 +394,13 @@ function FolhaPontoContent() {
             <table className="w-full border-collapse text-[8px]">
               <thead>
                 <tr className="bg-slate-900 text-white">
-                  <th className="border border-slate-700 px-0.5 py-0.5 text-center font-semibold w-5">Dia</th>
-                  <th className="border border-slate-700 px-0.5 py-0.5 text-center font-semibold w-7">D.S.</th>
-                  <th className="border border-slate-700 px-0.5 py-0.5 text-center font-semibold">E</th>
-                  <th className="border border-slate-700 px-0.5 py-0.5 text-center font-semibold">SA</th>
-                  <th className="border border-slate-700 px-0.5 py-0.5 text-center font-semibold">RA</th>
-                  <th className="border border-slate-700 px-0.5 py-0.5 text-center font-semibold">S</th>
-                  <th className="border border-slate-700 px-0.5 py-0.5 text-center font-semibold w-20">Obs.</th>
+                  <th className="border border-slate-700 px-1 py-0.5 text-center font-semibold min-w-[20px]">Dia</th>
+                  <th className="border border-slate-700 px-1 py-0.5 text-center font-semibold min-w-[30px]">D.S.</th>
+                  <th className="border border-slate-700 px-1 py-0.5 text-center font-semibold min-w-[50px]">Entrada</th>
+                  <th className="border border-slate-700 px-1 py-0.5 text-center font-semibold min-w-[50px]">S.Almoço</th>
+                  <th className="border border-slate-700 px-1 py-0.5 text-center font-semibold min-w-[50px]">Retorno</th>
+                  <th className="border border-slate-700 px-1 py-0.5 text-center font-semibold min-w-[50px]">Saída</th>
+                  <th className="border border-slate-700 px-1 py-0.5 text-center font-semibold">OBSERVAÇÃO</th>
                 </tr>
               </thead>
               <tbody>
@@ -400,10 +468,9 @@ function FolhaPontoContent() {
               </tbody>
               <tfoot>
                 <tr className="bg-slate-100 font-bold">
-                  <td colSpan={6} className="border border-slate-700 px-1 py-0.5 text-right text-[8px]">
+                  <td colSpan={7} className="border border-slate-700 px-2 py-1 text-right text-[8px]">
                     TOTAL DIAS: {totalEntries} · HORAS: {totalHours}h{String(totalMins).padStart(2, '0')}
                   </td>
-                  <td className="border border-slate-700 px-0.5 py-0.5 text-[7px]"></td>
                 </tr>
               </tfoot>
             </table>
@@ -488,37 +555,38 @@ function FolhaPontoContent() {
               </div>
             </div>
 
-            {/* Conteúdo condicional */}
-            {report.justifications.length > 0 ? (
-              <>
-                {/* Seção de retificações aprovadas */}
-                {(report.adjustments || []).length > 0 && (
-                  <div className="border-2 border-cyan-300 rounded-lg p-2 mb-2">
-                    <h3 className="text-[8px] font-bold text-slate-700 uppercase tracking-wider mb-1.5 flex items-center gap-2">
-                      📝 Retificações Aprovadas no Período
-                    </h3>
-                    <ul className="space-y-1 text-[9px]">
-                      {(report.adjustments || []).map((adj: any) => (
-                        <li key={adj.id} className="flex items-start gap-1.5 pb-1 border-b border-cyan-100 last:border-b-0 last:pb-0">
-                          <span className="font-bold">{formatDateBR(adj.entryDate)}</span>
-                          <span className="text-slate-500">—</span>
-                          <span>
-                            {adj.fieldAltered === 'checkIn' && '🟢 Entrada'}
-                            {adj.fieldAltered === 'lunchOut' && '🟡 Saída Almoço'}
-                            {adj.fieldAltered === 'lunchIn' && '🟠 Retorno Almoço'}
-                            {adj.fieldAltered === 'checkOut' && '🔴 Saída'}
-                          </span>
-                          <span>para</span>
-                          <span className="font-mono font-semibold">{formatTimeInBrazil(adj.newValue)}</span>
-                          {adj.adjustmentType === 'hr_direct' && (
-                            <span className="text-[8px] bg-purple-100 text-purple-700 px-1 py-0.5 rounded">RH</span>
-                          )}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
+            {/* Todas as ocorrências do período */}
+            <div className="space-y-2">
+              {/* Retificações aprovadas */}
+              {(report.adjustments || []).length > 0 && (
+                <div className="border-2 border-cyan-300 rounded-lg p-2">
+                  <h3 className="text-[8px] font-bold text-slate-700 uppercase tracking-wider mb-1.5 flex items-center gap-2">
+                    📝 Retificações Aprovadas no Período
+                  </h3>
+                  <ul className="space-y-1 text-[9px]">
+                    {(report.adjustments || []).map((adj: any) => (
+                      <li key={adj.id} className="flex items-start gap-1.5 pb-1 border-b border-cyan-100 last:border-b-0 last:pb-0">
+                        <span className="font-bold">{formatDateBR(adj.entryDate)}</span>
+                        <span className="text-slate-500">—</span>
+                        <span>
+                          {adj.fieldAltered === 'checkIn' && '🟢 Entrada'}
+                          {adj.fieldAltered === 'lunchOut' && '🟡 Saída Almoço'}
+                          {adj.fieldAltered === 'lunchIn' && '🟠 Retorno Almoço'}
+                          {adj.fieldAltered === 'checkOut' && '🔴 Saída'}
+                        </span>
+                        <span>para</span>
+                        <span className="font-mono font-semibold">{formatTimeInBrazil(adj.newValue)}</span>
+                        {adj.adjustmentType === 'hr_direct' && (
+                          <span className="text-[8px] bg-purple-100 text-purple-700 px-1 py-0.5 rounded">RH</span>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
 
+              {/* Justificativas */}
+              {report.justifications.length > 0 && (
                 <div className="space-y-2">
                   {report.justifications.map((j, idx) => {
                     const absenceDate = new Date(`${j.justificationDate}T12:00:00-03:00`);
@@ -559,7 +627,6 @@ function FolhaPontoContent() {
                           </span>
                         </div>
                         <div>
-                          <p className="text-[8px] font-bold text-slate-600 uppercase mb-0.5">Motivo:</p>
                           <p className="text-[9px] text-slate-900 leading-relaxed bg-slate-50 p-1.5 rounded border border-slate-200">
                             {j.reason}
                           </p>
@@ -576,119 +643,78 @@ function FolhaPontoContent() {
                     );
                   })}
                 </div>
-              </>
-            ) : (
-              /* Não há justificativas */
-              <div className="space-y-3">
-                {/* Retificações aprovadas */}
-                {(report.adjustments || []).length > 0 && (
-                  <div className="border-2 border-cyan-300 rounded-lg p-2">
-                    <h3 className="text-[8px] font-bold text-slate-700 uppercase tracking-wider mb-1.5 flex items-center gap-2">
-                      📝 Retificações Aprovadas no Período
-                    </h3>
-                    <ul className="space-y-1 text-[9px]">
-                      {(report.adjustments || []).map((adj: any) => (
-                        <li key={adj.id} className="flex items-start gap-1.5 pb-1 border-b border-cyan-100 last:border-b-0 last:pb-0">
-                          <span className="font-bold">{formatDateBR(adj.entryDate)}</span>
-                          <span className="text-slate-500">—</span>
-                          <span>
-                            {adj.fieldAltered === 'checkIn' && '🟢 Entrada'}
-                            {adj.fieldAltered === 'lunchOut' && '🟡 Saída Almoço'}
-                            {adj.fieldAltered === 'lunchIn' && '🟠 Retorno Almoço'}
-                            {adj.fieldAltered === 'checkOut' && '🔴 Saída'}
-                          </span>
-                          <span>para</span>
-                          <span className="font-mono font-semibold">{formatTimeInBrazil(adj.newValue)}</span>
-                          {adj.adjustmentType === 'hr_direct' && (
-                            <span className="text-[8px] bg-purple-100 text-purple-700 px-1 py-0.5 rounded">RH</span>
-                          )}
+              )}
+
+              {/* Feriados e Ocorrências */}
+              {report.occurrences.length > 0 && (
+                <div className="border-2 border-orange-300 rounded-lg p-2">
+                  <h3 className="text-[8px] font-bold text-slate-700 uppercase tracking-wider mb-1">
+                    🎉 Feriados e Ocorrências
+                  </h3>
+                  <ul className="space-y-0.5 text-[9px]">
+                    {report.occurrences.map((o) => (
+                      <li key={o.id} className="flex items-center gap-1.5 flex-wrap">
+                        <span className="font-bold">{formatDateBR(o.occurrenceDate)}</span>
+                        <span className="text-slate-500">—</span>
+                        <span>{o.type === 'holiday' ? '🎉 Feriado' : o.type === 'optional_point' ? '⚠️ Ponto Facultativo' : '🏫 Dia sem Aula'}</span>
+                        <span className="font-semibold">: {o.name}</span>
+                        <span className="text-[8px] text-slate-500">({o.scope === 'national' ? 'Nacional' : o.scope === 'state' ? 'Estadual' : o.scope === 'municipal' ? 'Municipal' : 'Escolar'})</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Afastamentos */}
+              {report.absences.length > 0 && (
+                <div className="border-2 border-purple-300 rounded-lg p-2">
+                  <h3 className="text-[8px] font-bold text-slate-700 uppercase tracking-wider mb-1">
+                    🚫 Afastamentos (impedido de registrar ponto)
+                  </h3>
+                  <ul className="space-y-0.5 text-[9px]">
+                    {report.absences.map((a) => {
+                      const nameMap: Record<string, string> = {
+                        vacation: 'Férias',
+                        medical_leave: 'Licença Médica',
+                        maternity_leave: 'Licença Maternidade',
+                        paternity_leave: 'Licença Paternidade',
+                        bereavement_leave: 'Licença Nojo',
+                        marriage_leave: 'Licença Casamento',
+                        technical_orientation: 'Orientação Técnica',
+                        school_recess: 'Recesso Escolar',
+                        bank_withdrawal: 'Retirada Bancária',
+                        other: 'Afastamento',
+                      };
+                      return (
+                        <li key={a.id} className="flex items-center gap-1.5 flex-wrap">
+                          <span className="font-semibold">🚫 {nameMap[a.type] || 'Afastamento'}</span>
+                          <span>{formatDateBR(a.startDate)} a {formatDateBR(a.endDate)}</span>
+                          {a.documentRef && <span className="text-[8px] text-slate-500">(Doc: {a.documentRef})</span>}
                         </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
+                      );
+                    })}
+                  </ul>
+                </div>
+              )}
+            </div>
 
-                {(report.occurrences.length > 0 || report.absences.length > 0) && (
-                  <div className="space-y-1.5">
-                    {report.occurrences.length > 0 && (
-                      <div className="border-2 border-orange-300 rounded-lg p-2">
-                        <h3 className="text-[8px] font-bold text-slate-700 uppercase tracking-wider mb-1">
-                          🎉 Feriados e Ocorrências
-                        </h3>
-                        <ul className="space-y-0.5 text-[9px]">
-                          {report.occurrences.map((o) => (
-                            <li key={o.id} className="flex items-center gap-1.5 flex-wrap">
-                              <span className="font-bold">{formatDateBR(o.occurrenceDate)}</span>
-                              <span className="text-slate-500">—</span>
-                              <span>{o.type === 'holiday' ? '🎉 Feriado' : o.type === 'optional_point' ? '⚠️ Ponto Facultativo' : '🏫 Dia sem Aula'}</span>
-                              <span className="font-semibold">: {o.name}</span>
-                              <span className="text-[8px] text-slate-500">({o.scope === 'national' ? 'Nacional' : o.scope === 'state' ? 'Estadual' : o.scope === 'municipal' ? 'Municipal' : 'Escolar'})</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-
-                    {report.absences.length > 0 && (
-                      <div className="border-2 border-purple-300 rounded-lg p-2">
-                        <h3 className="text-[8px] font-bold text-slate-700 uppercase tracking-wider mb-1">
-                          🚫 Afastamentos (impedido de registrar ponto)
-                        </h3>
-                        <ul className="space-y-0.5 text-[9px]">
-                          {report.absences.map((a) => {
-                            const nameMap: Record<string, string> = {
-                              vacation: 'Férias',
-                              medical_leave: 'Licença Médica',
-                              maternity_leave: 'Licença Maternidade',
-                              paternity_leave: 'Licença Paternidade',
-                              bereavement_leave: 'Licença Nojo',
-                              marriage_leave: 'Licença Casamento',
-                              technical_orientation: 'Orientação Técnica',
-                              school_recess: 'Recesso Escolar',
-                              bank_withdrawal: 'Retirada Bancária',
-                              other: 'Afastamento',
-                            };
-                            return (
-                              <li key={a.id} className="flex items-center gap-1.5 flex-wrap">
-                                <span className="font-semibold">🚫 {nameMap[a.type] || 'Afastamento'}</span>
-                                <span>{formatDateBR(a.startDate)} a {formatDateBR(a.endDate)}</span>
-                                {a.documentRef && <span className="text-[8px] text-slate-500">(Doc: {a.documentRef})</span>}
-                              </li>
-                            );
-                          })}
-                        </ul>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Declaração e assinaturas - apenas quando há justificativas */}
+            {/* Assinaturas - apenas quando há justificativas */}
             {report.justifications.length > 0 && (
-              <>
-                <div className="mt-3 border-2 border-slate-900 rounded-lg p-2 bg-slate-50">
-                  <p className="text-[9px] text-slate-700 leading-relaxed">
-                    <strong>DECLARAÇÃO:</strong> Declaro que as justificativas acima foram analisadas pelo setor de Recursos Humanos da EE Profa. Marlene Frattini, conforme documentação apresentada e em conformidade com as normas internas da instituição.
-                  </p>
-                </div>
-
-                <div className="grid grid-cols-2 gap-6 mt-4 pt-3">
-                  <div className="text-center">
-                    <div className="border-t border-slate-900 pt-1">
-                      <p className="text-[10px] font-bold text-slate-900">____________________________________</p>
-                      <p className="text-[9px] text-slate-600">Diretor de Escola</p>
-                      <p className="text-[9px] text-slate-600">EE Profa. Marlene Frattini</p>
-                    </div>
-                  </div>
-                  <div className="text-center">
-                    <div className="border-t border-slate-900 pt-1">
-                      <p className="text-[10px] font-bold text-slate-900">____________________________________</p>
-                      <p className="text-[9px] text-slate-600">Responsável pelo RH</p>
-                    </div>
+              <div className="grid grid-cols-2 gap-6 mt-4 pt-3">
+                <div className="text-center">
+                  <div className="border-t border-slate-900 pt-1">
+                    <p className="text-[10px] font-bold text-slate-900">____________________________________</p>
+                    <p className="text-[9px] text-slate-600">Diretor de Escola</p>
+                    <p className="text-[9px] text-slate-600">EE Profa. Marlene Frattini</p>
                   </div>
                 </div>
-              </>
+                <div className="text-center">
+                  <div className="border-t border-slate-900 pt-1">
+                    <p className="text-[10px] font-bold text-slate-900">____________________________________</p>
+                    <p className="text-[9px] text-slate-600">Responsável pelo RH</p>
+                  </div>
+                </div>
+              </div>
             )}
 
             <div className="mt-3 text-center text-[8px] text-slate-500 border-t border-slate-200 pt-1.5">
