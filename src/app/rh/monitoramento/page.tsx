@@ -13,7 +13,7 @@ import {
   RefreshCw,
   Loader2,
 } from 'lucide-react';
-import { getCurrentBrazilDate, getCurrentBrazilTime, formatTimeInBrazil } from '@/lib/timezone';
+import { getCurrentBrazilDate, getCurrentBrazilTime, formatTimeInBrazil, formatDateBR } from '@/lib/timezone';
 
 type ServerStatus = {
   id: number;
@@ -26,6 +26,10 @@ type ServerStatus = {
   lunchOut: string | null;
   lunchIn: string | null;
   checkOut: string | null;
+  isAbsent: boolean;
+  absenceType: string | null;
+  absenceStartDate: string | null;
+  absenceEndDate: string | null;
 };
 
 function MonitoringContent() {
@@ -36,7 +40,7 @@ function MonitoringContent() {
   const [loading, setLoading] = useState(true);
   const [currentTime, setCurrentTime] = useState(getCurrentBrazilTime());
   const [currentDate, setCurrentDate] = useState(getCurrentBrazilDate());
-  const [filter, setFilter] = useState<'all' | 'registered' | 'not_registered'>('all');
+  const [filter, setFilter] = useState<'all' | 'registered' | 'not_registered' | 'absent'>('all');
 
   useEffect(() => {
     if (!authLoading && (!user || user.role !== 'hr')) {
@@ -77,6 +81,10 @@ function MonitoringContent() {
         lunchOut: m.lunchOut,
         lunchIn: m.lunchIn,
         checkOut: m.checkOut,
+        isAbsent: m.isAbsent,
+        absenceType: m.absenceType,
+        absenceStartDate: m.absenceStartDate,
+        absenceEndDate: m.absenceEndDate,
       }));
 
       setServers(serverStatus);
@@ -90,13 +98,15 @@ function MonitoringContent() {
   const filteredServers = servers.filter((s) => {
     if (filter === 'all') return true;
     if (filter === 'registered') return s.registered;
-    if (filter === 'not_registered') return !s.registered;
+    if (filter === 'not_registered') return !s.registered && !s.isAbsent;
+    if (filter === 'absent') return s.isAbsent;
     return true;
   });
 
   const totalServers = servers.length;
   const registeredCount = servers.filter((s) => s.registered).length;
-  const notRegisteredCount = servers.filter((s) => !s.registered).length;
+  const absentCount = servers.filter((s) => s.isAbsent).length;
+  const notRegisteredCount = servers.filter((s) => !s.registered && !s.isAbsent).length;
   const percentage = totalServers > 0 ? Math.round((registeredCount / totalServers) * 100) : 0;
 
   if (loading) {
@@ -163,7 +173,7 @@ function MonitoringContent() {
         </div>
 
         {/* Estatísticas */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
           <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
             <div className="flex items-center gap-3 mb-2">
               <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center text-white">
@@ -182,6 +192,16 @@ function MonitoringContent() {
               <span className="text-xs text-slate-500">Registraram Ponto</span>
             </div>
             <p className="text-3xl font-bold text-green-700">{registeredCount}</p>
+          </div>
+
+          <div className="bg-white rounded-2xl shadow-sm border border-purple-200 p-5">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center text-white">
+                <Users className="w-5 h-5" />
+              </div>
+              <span className="text-xs text-slate-500">Em Afastamento</span>
+            </div>
+            <p className="text-3xl font-bold text-purple-700">{absentCount}</p>
           </div>
 
           <div className="bg-white rounded-2xl shadow-sm border border-red-200 p-5">
@@ -247,6 +267,15 @@ function MonitoringContent() {
             <XCircle className="w-4 h-4" />
             Não Registraram ({notRegisteredCount})
           </button>
+          <button
+            onClick={() => setFilter('absent')}
+            className={`px-4 py-2 text-sm font-medium rounded-xl transition flex items-center gap-2 ${
+              filter === 'absent' ? 'bg-purple-600 text-white' : 'bg-purple-100 text-purple-700 hover:bg-purple-200'
+            }`}
+          >
+            <Users className="w-4 h-4" />
+            Em Afastamento ({absentCount})
+          </button>
         </div>
 
         {/* Lista de Servidores */}
@@ -269,11 +298,14 @@ function MonitoringContent() {
                 <div
                   key={server.id}
                   className={`p-4 flex items-center gap-4 ${
+                    server.isAbsent ? 'bg-purple-50' :
                     !server.registered ? 'bg-red-50' : ''
                   }`}
                 >
                   <div className={`w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-lg ${
-                    server.registered
+                    server.isAbsent
+                      ? 'bg-gradient-to-br from-purple-500 to-purple-600'
+                      : server.registered
                       ? 'bg-gradient-to-br from-green-500 to-emerald-600'
                       : 'bg-gradient-to-br from-red-500 to-rose-600'
                   }`}>
@@ -283,7 +315,12 @@ function MonitoringContent() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <p className="font-semibold text-slate-900">{server.name}</p>
-                      {server.registered ? (
+                      {server.isAbsent ? (
+                        <span className="inline-flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-full bg-purple-100 text-purple-800 border border-purple-300">
+                          <Users className="w-3 h-3" />
+                          EM AFASTAMENTO: {server.absenceType}
+                        </span>
+                      ) : server.registered ? (
                         <span className="inline-flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-full bg-green-100 text-green-800 border border-green-300">
                           <CheckCircle2 className="w-3 h-3" />
                           REGISTROU
@@ -298,7 +335,12 @@ function MonitoringContent() {
                     <p className="text-xs text-slate-500 truncate mt-1">
                       {server.position} {server.registration && `· Matrícula: ${server.registration}`}
                     </p>
-                    {server.registered && (
+                    {server.isAbsent && (
+                      <p className="text-[10px] text-purple-600 mt-1">
+                        Período: {formatDateBR(server.absenceStartDate)} a {formatDateBR(server.absenceEndDate)}
+                      </p>
+                    )}
+                    {server.registered && !server.isAbsent && (
                       <div className="flex gap-3 mt-2 text-[10px] text-slate-600">
                         <span>E: {formatTimeInBrazil(server.checkIn)}</span>
                         <span>SA: {formatTimeInBrazil(server.lunchOut)}</span>

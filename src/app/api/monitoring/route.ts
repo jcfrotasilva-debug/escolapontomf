@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import { getSession } from '@/lib/auth';
 import { db } from '@/db';
-import { timeEntries, users } from '@/db/schema';
-import { and, eq, gte, lte } from 'drizzle-orm';
+import { timeEntries, users, serverAbsences } from '@/db/schema';
+import { and, eq, gte, lte, or } from 'drizzle-orm';
 import { getCurrentBrazilDate } from '@/lib/timezone';
 
 // API específica para monitoramento - retorna todos os registros de todos os servidores ativos
@@ -34,9 +34,35 @@ export async function GET(request: Request) {
       .from(timeEntries)
       .where(eq(timeEntries.entryDate, date));
 
+    // Buscar todos os afastamentos que cobrem o dia
+    const absences = await db
+      .select()
+      .from(serverAbsences)
+      .where(
+        and(
+          lte(serverAbsences.startDate, date),
+          gte(serverAbsences.endDate, date)
+        )
+      );
+
+    // Mapeamento de tipos de afastamento
+    const absenceTypeNames: Record<string, string> = {
+      vacation: 'Férias',
+      medical_leave: 'Licença Médica',
+      maternity_leave: 'Licença Maternidade',
+      paternity_leave: 'Licença Paternidade',
+      bereavement_leave: 'Licença Nojo',
+      marriage_leave: 'Licença Casamento',
+      technical_orientation: 'Orientação Técnica',
+      school_recess: 'Recesso Escolar',
+      bank_withdrawal: 'Retirada Bancária',
+      other: 'Afastamento',
+    };
+
     // Combinar dados
     const monitoring = activeServers.map((server) => {
       const entry = entries.find((e) => e.userId === server.id);
+      const absence = absences.find((a) => a.userId === server.id);
       
       return {
         ...server,
@@ -46,6 +72,10 @@ export async function GET(request: Request) {
         checkOut: entry?.checkOut || null,
         hasAnyRecord: !!(entry?.checkIn || entry?.lunchOut || entry?.lunchIn || entry?.checkOut),
         isComplete: !!(entry?.checkIn && entry?.lunchOut && entry?.lunchIn && entry?.checkOut),
+        isAbsent: !!absence,
+        absenceType: absence ? (absenceTypeNames[absence.type] || 'Afastamento') : null,
+        absenceStartDate: absence?.startDate || null,
+        absenceEndDate: absence?.endDate || null,
       };
     });
 
