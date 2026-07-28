@@ -263,26 +263,44 @@ export async function POST(request: Request) {
     const newValueTimestamp = newValue ? timeToTimestamp(newValue, entryDate) : null;
     const oldValueTimestamp = oldValue ? timeToTimestamp(oldValue, entryDate) : null;
 
-    console.log('[ADJUSTMENTS POST] Inserindo retificação no banco...');
-    const [adjustment] = await db
-      .insert(timeEntryAdjustments)
-      .values({
-        timeEntryId,
-        entryDate,
-        userId: targetUserId,
-        fieldAltered,
-        oldValue: oldValueTimestamp,
-        newValue: newValueTimestamp,
-        reason: reason.trim(),
-        adjustmentType: finalType,
-        requestedById: session.role === 'server' ? session.userId : null,
-        approvedById,
-        status,
-        adjustmentDate,
-      })
-      .returning();
+    console.log('[ADJUSTMENTS POST] Preparando dados para inserção...');
+    const insertData = {
+      timeEntryId,
+      entryDate,
+      userId: targetUserId,
+      fieldAltered,
+      oldValue: oldValueTimestamp,
+      newValue: newValueTimestamp,
+      reason: reason.trim(),
+      adjustmentType: finalType,
+      requestedById: session.role === 'server' ? session.userId : null,
+      approvedById,
+      status,
+      adjustmentDate,
+    };
 
-    console.log('[ADJUSTMENTS POST] Retificação criada com sucesso:', adjustment.id);
+    console.log('[ADJUSTMENTS POST] Dados para inserção:', insertData);
+
+    console.log('[ADJUSTMENTS POST] Inserindo retificação no banco...');
+    let adjustment;
+    try {
+      const result = await db
+        .insert(timeEntryAdjustments)
+        .values(insertData)
+        .returning();
+      
+      adjustment = result[0];
+      console.log('[ADJUSTMENTS POST] Retificação criada com sucesso:', adjustment?.id);
+    } catch (insertError: any) {
+      console.error('[ADJUSTMENTS POST ERROR - INSERT]', {
+        message: insertError?.message,
+        stack: insertError?.stack,
+        error: insertError,
+        data: insertData,
+        timestamp: new Date().toISOString()
+      });
+      throw insertError;
+    }
 
     const message = session.role === 'hr' && adjustmentType === 'hr_direct'
       ? 'Retificação aplicada diretamente com sucesso!'
