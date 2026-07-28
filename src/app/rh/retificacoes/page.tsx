@@ -95,10 +95,20 @@ function AdjustmentsContent() {
       const res = await fetch(`/api/adjustments?month=${month}`);
       if (res.ok) {
         const data = await res.json();
-        setAdjustments(data.adjustments);
+        setAdjustments(data.adjustments || []);
+      } else {
+        console.error('[FETCH ADJUSTMENTS] Erro HTTP:', res.status, res.statusText);
+        const errorData = await res.json().catch(() => ({ error: 'Erro desconhecido' }));
+        console.error('[FETCH ADJUSTMENTS] Detalhes:', errorData);
+        setAdjustments([]);
       }
-    } catch (e) {
-      console.error(e);
+    } catch (e: any) {
+      console.error('[FETCH ADJUSTMENTS ERROR]', {
+        message: e?.message,
+        stack: e?.stack,
+        error: e
+      });
+      setAdjustments([]);
     } finally {
       setLoading(false);
     }
@@ -109,10 +119,18 @@ function AdjustmentsContent() {
       const res = await fetch('/api/employees');
       if (res.ok) {
         const data = await res.json();
-        setServers(data.users.filter((u: any) => u.role === 'server' && u.active));
+        setServers(data.users?.filter((u: any) => u.role === 'server' && u.active) || []);
+      } else {
+        console.error('[FETCH SERVERS] Erro HTTP:', res.status, res.statusText);
+        setServers([]);
       }
-    } catch (e) {
-      console.error(e);
+    } catch (e: any) {
+      console.error('[FETCH SERVERS ERROR]', {
+        message: e?.message,
+        stack: e?.stack,
+        error: e
+      });
+      setServers([]);
     }
   }
 
@@ -135,11 +153,17 @@ function AdjustmentsContent() {
         setReviewError('');
         fetchAdjustments();
       } else {
+        console.error('[HANDLE REVIEW] Erro HTTP:', res.status, res.statusText);
         const errorData = await res.json().catch(() => ({ error: 'Erro desconhecido' }));
+        console.error('[HANDLE REVIEW] Detalhes:', errorData);
         setReviewError(errorData.error || 'Erro ao processar solicitação');
       }
-    } catch (e) {
-      console.error('Erro ao analisar retificação:', e);
+    } catch (e: any) {
+      console.error('[HANDLE REVIEW ERROR]', {
+        message: e?.message,
+        stack: e?.stack,
+        error: e
+      });
       setReviewError('Erro de conexão. Tente novamente.');
     } finally {
       setReviewLoading(false);
@@ -159,13 +183,24 @@ function AdjustmentsContent() {
           adjustmentType: 'hr_direct',
         }),
       });
+      
       if (res.ok) {
         setShowDirectModal(false);
         setDirectForm({ userId: '', entryDate: '', fieldAltered: 'checkIn', newValue: '', reason: '' });
         fetchAdjustments();
+      } else {
+        console.error('[HANDLE DIRECT SUBMIT] Erro HTTP:', res.status, res.statusText);
+        const errorData = await res.json().catch(() => ({ error: 'Erro desconhecido' }));
+        console.error('[HANDLE DIRECT SUBMIT] Detalhes:', errorData);
+        alert(`Erro ao criar retificação: ${errorData.error || 'Erro desconhecido'}`);
       }
-    } catch (e) {
-      console.error(e);
+    } catch (e: any) {
+      console.error('[HANDLE DIRECT SUBMIT ERROR]', {
+        message: e?.message,
+        stack: e?.stack,
+        error: e
+      });
+      alert('Erro de conexão. Tente novamente.');
     } finally {
       setDirectLoading(false);
     }
