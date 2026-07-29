@@ -186,9 +186,11 @@ function AdjustmentsContent() {
         
         // Preencher formulário com dados existentes
         if (data.entry) {
+          // Usar formatTimeInBrazil para converter corretamente o fuso horário
           const formatTime = (iso: string | null) => {
             if (!iso) return '';
-            return iso.slice(11, 16); // Extrair HH:MM do ISO timestamp
+            const time = formatTimeInBrazil(iso);
+            return time === '--:--' ? '' : time;
           };
           
           setDirectForm({

@@ -92,6 +92,7 @@ export async function PATCH(request: Request) {
     console.log('[PATCH TIME ENTRY] Atualizando registro:', { userId, entryDate, updateData });
 
     // Verificar se o registro existe
+    console.log('[PATCH TIME ENTRY] Buscando registro existente...');
     const existingEntry = await db
       .select()
       .from(timeEntries)
@@ -103,19 +104,26 @@ export async function PATCH(request: Request) {
       )
       .then((rows) => rows[0]);
 
+    console.log('[PATCH TIME ENTRY] existingEntry:', existingEntry);
+
     if (!existingEntry) {
       // Se não existe, criar um novo registro
       console.log('[PATCH TIME ENTRY] Registro não existe, criando novo...');
+      
+      const insertValues = {
+        userId: parseInt(userId, 10),
+        entryDate,
+        checkIn: updateData.checkIn || null,
+        lunchOut: updateData.lunchOut || null,
+        lunchIn: updateData.lunchIn || null,
+        checkOut: updateData.checkOut || null,
+      };
+      
+      console.log('[PATCH TIME ENTRY] Valores para inserção:', insertValues);
+      
       const [newEntry] = await db
         .insert(timeEntries)
-        .values({
-          userId: parseInt(userId, 10),
-          entryDate,
-          checkIn: updateData.checkIn,
-          lunchOut: updateData.lunchOut,
-          lunchIn: updateData.lunchIn,
-          checkOut: updateData.checkOut,
-        })
+        .values(insertValues)
         .returning();
 
       console.log('[PATCH TIME ENTRY] Novo registro criado:', newEntry.id);
@@ -128,6 +136,8 @@ export async function PATCH(request: Request) {
     }
 
     // Atualizar registro existente
+    console.log('[PATCH TIME ENTRY] Atualizando registro ID:', existingEntry.id);
+    
     const [updated] = await db
       .update(timeEntries)
       .set(updateData)
