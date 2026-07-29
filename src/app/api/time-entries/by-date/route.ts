@@ -63,18 +63,17 @@ export async function PATCH(request: Request) {
       );
     }
 
-    // Função para converter hora (HH:MM) para timestamp ISO completo
-    const timeToTimestamp = (time: string | null, date: string): string | null => {
+    // Função para converter hora (HH:MM) para string ISO com fuso horário Brasil
+    const timeToISO = (time: string | null, date: string): string | null => {
       if (!time || time === 'null' || time === '') return null;
       // Formato esperado: YYYY-MM-DD e HH:MM
-      // Retorna: YYYY-MM-DDTHH:MM:00-03:00 (fuso horário Brasil)
+      // Retorna: string ISO com fuso horário Brasil (-03:00)
+      // O banco de dados irá converter automaticamente para UTC
       return `${date}T${time}:00-03:00`;
     };
 
     // Preparar dados para atualização
-    const updateData: Record<string, any> = {
-      updatedAt: new Date().toISOString(),
-    };
+    const updateData: Record<string, any> = {};
 
     // Verificar se os valores são strings vazias ou null
     const hasCheckIn = checkIn !== undefined && checkIn !== null && checkIn !== '';
@@ -83,16 +82,16 @@ export async function PATCH(request: Request) {
     const hasCheckOut = checkOut !== undefined && checkOut !== null && checkOut !== '';
 
     if (hasCheckIn) {
-      updateData.checkIn = timeToTimestamp(checkIn, entryDate);
+      updateData.checkIn = timeToISO(checkIn, entryDate);
     }
     if (hasLunchOut) {
-      updateData.lunchOut = timeToTimestamp(lunchOut, entryDate);
+      updateData.lunchOut = timeToISO(lunchOut, entryDate);
     }
     if (hasLunchIn) {
-      updateData.lunchIn = timeToTimestamp(lunchIn, entryDate);
+      updateData.lunchIn = timeToISO(lunchIn, entryDate);
     }
     if (hasCheckOut) {
-      updateData.checkOut = timeToTimestamp(checkOut, entryDate);
+      updateData.checkOut = timeToISO(checkOut, entryDate);
     }
 
     console.log('[PATCH TIME ENTRY] Verificação de valores:', {
@@ -112,10 +111,7 @@ export async function PATCH(request: Request) {
     console.log('[PATCH TIME ENTRY] Atualizando registro:', { 
       userId, 
       entryDate, 
-      updateData,
-      updateDataType: typeof updateData,
-      updatedAtType: typeof updateData.updatedAt,
-      updatedAtValue: updateData.updatedAt
+      updateData
     });
 
     // Verificar se o registro existe
@@ -164,6 +160,7 @@ export async function PATCH(request: Request) {
 
     // Atualizar registro existente
     console.log('[PATCH TIME ENTRY] Atualizando registro ID:', existingEntry.id);
+    console.log('[PATCH TIME ENTRY] updateData completo:', JSON.stringify(updateData));
     
     let updated;
     try {
@@ -179,10 +176,10 @@ export async function PATCH(request: Request) {
       console.error('[PATCH TIME ENTRY ERROR - UPDATE]', {
         message: updateError?.message,
         stack: updateError?.stack,
-        error: updateError,
-        updateData,
+        updateData: JSON.stringify(updateData),
         existingEntryId: existingEntry.id,
-        timestamp: new Date().toISOString()
+        errorName: updateError?.name,
+        errorCode: updateError?.code
       });
       throw updateError;
     }
