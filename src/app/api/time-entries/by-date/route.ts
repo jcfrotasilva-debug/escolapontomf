@@ -73,23 +73,50 @@ export async function PATCH(request: Request) {
 
     // Preparar dados para atualização
     const updateData: Record<string, any> = {
-      updatedAt: new Date(),
+      updatedAt: new Date().toISOString(),
     };
 
-    if (checkIn !== undefined) {
+    // Verificar se os valores são strings vazias ou null
+    const hasCheckIn = checkIn !== undefined && checkIn !== null && checkIn !== '';
+    const hasLunchOut = lunchOut !== undefined && lunchOut !== null && lunchOut !== '';
+    const hasLunchIn = lunchIn !== undefined && lunchIn !== null && lunchIn !== '';
+    const hasCheckOut = checkOut !== undefined && checkOut !== null && checkOut !== '';
+
+    if (hasCheckIn) {
       updateData.checkIn = timeToTimestamp(checkIn, entryDate);
     }
-    if (lunchOut !== undefined) {
+    if (hasLunchOut) {
       updateData.lunchOut = timeToTimestamp(lunchOut, entryDate);
     }
-    if (lunchIn !== undefined) {
+    if (hasLunchIn) {
       updateData.lunchIn = timeToTimestamp(lunchIn, entryDate);
     }
-    if (checkOut !== undefined) {
+    if (hasCheckOut) {
       updateData.checkOut = timeToTimestamp(checkOut, entryDate);
     }
 
-    console.log('[PATCH TIME ENTRY] Atualizando registro:', { userId, entryDate, updateData });
+    console.log('[PATCH TIME ENTRY] Verificação de valores:', {
+      hasCheckIn, hasLunchOut, hasLunchIn, hasCheckOut,
+      checkIn, lunchOut, lunchIn, checkOut
+    });
+
+    // Verificar se há pelo menos um campo para atualizar
+    if (!hasCheckIn && !hasLunchOut && !hasLunchIn && !hasCheckOut) {
+      console.error('[PATCH TIME ENTRY ERROR] Nenhum campo para atualizar');
+      return NextResponse.json(
+        { error: 'Pelo menos um horário deve ser informado' },
+        { status: 400 }
+      );
+    }
+
+    console.log('[PATCH TIME ENTRY] Atualizando registro:', { 
+      userId, 
+      entryDate, 
+      updateData,
+      updateDataType: typeof updateData,
+      updatedAtType: typeof updateData.updatedAt,
+      updatedAtValue: updateData.updatedAt
+    });
 
     // Verificar se o registro existe
     console.log('[PATCH TIME ENTRY] Buscando registro existente...');
@@ -138,13 +165,35 @@ export async function PATCH(request: Request) {
     // Atualizar registro existente
     console.log('[PATCH TIME ENTRY] Atualizando registro ID:', existingEntry.id);
     
-    const [updated] = await db
-      .update(timeEntries)
-      .set(updateData)
-      .where(eq(timeEntries.id, existingEntry.id))
-      .returning();
+    let updated;
+    try {
+      const result = await db
+        .update(timeEntries)
+        .set(updateData)
+        .where(eq(timeEntries.id, existingEntry.id))
+        .returning();
+      
+      updated = result[0];
+      console.log('[PATCH TIME ENTRY] Registro atualizado:', updated?.id);
+    } catch (updateError: any) {
+      console.error('[PATCH TIME ENTRY ERROR - UPDATE]', {
+        message: updateError?.message,
+        stack: updateError?.stack,
+        error: updateError,
+        updateData,
+        existingEntryId: existingEntry.id,
+        timestamp: new Date().toISOString()
+      });
+      throw updateError;
+    }
 
-    console.log('[PATCH TIME ENTRY] Registro atualizado:', updated.id);
+    if (!updated) {
+      console.error('[PATCH TIME ENTRY ERROR] Registro não foi atualizado');
+      return NextResponse.json(
+        { error: 'Erro ao atualizar registro' },
+        { status: 500 }
+      );
+    }
 
     return NextResponse.json({
       entry: updated,
