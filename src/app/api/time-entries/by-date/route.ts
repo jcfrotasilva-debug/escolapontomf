@@ -63,13 +63,16 @@ export async function PATCH(request: Request) {
       );
     }
 
-    // Função para converter hora (HH:MM) para string ISO com fuso horário Brasil
-    const timeToISO = (time: string | null, date: string): string | null => {
+    // Função para converter hora (HH:MM) para objeto Date
+    // O JavaScript irá criar um objeto Date que o Drizzle ORM converterá corretamente
+    const timeToDate = (time: string | null, date: string): Date | null => {
       if (!time || time === 'null' || time === '') return null;
       // Formato esperado: YYYY-MM-DD e HH:MM
-      // Retorna: string ISO com fuso horário Brasil (-03:00)
-      // O banco de dados irá converter automaticamente para UTC
-      return `${date}T${time}:00-03:00`;
+      // Cria um objeto Date com o horário local do servidor
+      // O Drizzle ORM irá converter para o fuso horário do banco de dados
+      const [hours, minutes] = time.split(':').map(Number);
+      const [year, month, day] = date.split('-').map(Number);
+      return new Date(year, month - 1, day, hours, minutes, 0);
     };
 
     // Preparar dados para atualização
@@ -82,16 +85,16 @@ export async function PATCH(request: Request) {
     const hasCheckOut = checkOut !== undefined && checkOut !== null && checkOut !== '';
 
     if (hasCheckIn) {
-      updateData.checkIn = timeToISO(checkIn, entryDate);
+      updateData.checkIn = timeToDate(checkIn, entryDate);
     }
     if (hasLunchOut) {
-      updateData.lunchOut = timeToISO(lunchOut, entryDate);
+      updateData.lunchOut = timeToDate(lunchOut, entryDate);
     }
     if (hasLunchIn) {
-      updateData.lunchIn = timeToISO(lunchIn, entryDate);
+      updateData.lunchIn = timeToDate(lunchIn, entryDate);
     }
     if (hasCheckOut) {
-      updateData.checkOut = timeToISO(checkOut, entryDate);
+      updateData.checkOut = timeToDate(checkOut, entryDate);
     }
 
     console.log('[PATCH TIME ENTRY] Verificação de valores:', {
