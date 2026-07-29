@@ -64,10 +64,14 @@ function AdjustmentsContent() {
   const [directForm, setDirectForm] = useState({
     userId: '',
     entryDate: '',
-    fieldAltered: 'checkIn',
-    newValue: '',
+    checkIn: '',
+    lunchOut: '',
+    lunchIn: '',
+    checkOut: '',
     reason: '',
   });
+  const [existingEntry, setExistingEntry] = useState<any>(null);
+  const [entryLoading, setEntryLoading] = useState(false);
   const [directLoading, setDirectLoading] = useState(false);
 
   // Modal para analisar
@@ -170,29 +174,76 @@ function AdjustmentsContent() {
     }
   }
 
+  async function fetchEntryByDate() {
+    if (!directForm.userId || !directForm.entryDate) return;
+    
+    setEntryLoading(true);
+    try {
+      const res = await fetch(`/api/time-entries/by-date?userId=${directForm.userId}&date=${directForm.entryDate}`);
+      if (res.ok) {
+        const data = await res.json();
+        setExistingEntry(data.entry);
+        
+        // Preencher formulário com dados existentes
+        if (data.entry) {
+          const formatTime = (iso: string | null) => {
+            if (!iso) return '';
+            return iso.slice(11, 16); // Extrair HH:MM do ISO timestamp
+          };
+          
+          setDirectForm({
+            ...directForm,
+            checkIn: formatTime(data.entry.checkIn),
+            lunchOut: formatTime(data.entry.lunchOut),
+            lunchIn: formatTime(data.entry.lunchIn),
+            checkOut: formatTime(data.entry.checkOut),
+          });
+        } else {
+          // Limpar formulário se não houver registro
+          setDirectForm({
+            ...directForm,
+            checkIn: '',
+            lunchOut: '',
+            lunchIn: '',
+            checkOut: '',
+          });
+        }
+      }
+    } catch (e: any) {
+      console.error('[FETCH ENTRY ERROR]', e);
+    } finally {
+      setEntryLoading(false);
+    }
+  }
+
   async function handleDirectSubmit(e: React.FormEvent) {
     e.preventDefault();
     setDirectLoading(true);
     try {
-      const res = await fetch('/api/adjustments', {
-        method: 'POST',
+      const res = await fetch('/api/time-entries/by-date', {
+        method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          ...directForm,
           userId: parseInt(directForm.userId, 10),
-          adjustmentType: 'hr_direct',
+          entryDate: directForm.entryDate,
+          checkIn: directForm.checkIn || null,
+          lunchOut: directForm.lunchOut || null,
+          lunchIn: directForm.lunchIn || null,
+          checkOut: directForm.checkOut || null,
         }),
       });
       
       if (res.ok) {
         setShowDirectModal(false);
-        setDirectForm({ userId: '', entryDate: '', fieldAltered: 'checkIn', newValue: '', reason: '' });
+        setDirectForm({ userId: '', entryDate: '', checkIn: '', lunchOut: '', lunchIn: '', checkOut: '', reason: '' });
+        setExistingEntry(null);
         fetchAdjustments();
+        alert('Registro atualizado com sucesso!');
       } else {
         console.error('[HANDLE DIRECT SUBMIT] Erro HTTP:', res.status, res.statusText);
         const errorData = await res.json().catch(() => ({ error: 'Erro desconhecido' }));
         console.error('[HANDLE DIRECT SUBMIT] Detalhes:', errorData);
-        alert(`Erro ao criar retificação: ${errorData.error || 'Erro desconhecido'}`);
+        alert(`Erro ao atualizar registro: ${errorData.error || 'Erro desconhecido'}`);
       }
     } catch (e: any) {
       console.error('[HANDLE DIRECT SUBMIT ERROR]', {
@@ -486,35 +537,90 @@ function AdjustmentsContent() {
                 <input
                   type="date"
                   value={directForm.entryDate}
-                  onChange={(e) => setDirectForm({ ...directForm, entryDate: e.target.value })}
+                  onChange={(e) => {
+                    setDirectForm({ ...directForm, entryDate: e.target.value });
+                    setExistingEntry(null);
+                  }}
                   required
                   className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500"
                 />
               </div>
 
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Campo *</label>
-                <select
-                  value={directForm.fieldAltered}
-                  onChange={(e) => setDirectForm({ ...directForm, fieldAltered: e.target.value })}
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500"
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={fetchEntryByDate}
+                  disabled={!directForm.userId || !directForm.entryDate || entryLoading}
+                  className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-medium py-3 rounded-xl transition flex items-center justify-center gap-2"
                 >
-                  <option value="checkIn">🟢 Entrada</option>
-                  <option value="lunchOut">🟡 Saída Almoço</option>
-                  <option value="lunchIn">🟠 Retorno Almoço</option>
-                  <option value="checkOut">🔴 Saída</option>
-                </select>
+                  {entryLoading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Buscando...
+                    </>
+                  ) : (
+                    <>
+                      <Calendar className="w-4 h-4" />
+                      Buscar Registros
+                    </>
+                  )}
+                </button>
               </div>
 
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Novo Horário *</label>
-                <input
-                  type="time"
-                  value={directForm.newValue}
-                  onChange={(e) => setDirectForm({ ...directForm, newValue: e.target.value })}
-                  required
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500"
-                />
+              {existingEntry && (
+                <div className="bg-green-50 border border-green-200 rounded-xl p-3">
+                  <p className="text-xs font-semibold text-green-800 mb-1">✓ Registro encontrado</p>
+                  <p className="text-[10px] text-green-700">Editando registros existentes desta data</p>
+                </div>
+              )}
+
+              {!existingEntry && directForm.userId && directForm.entryDate && (
+                <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-3">
+                  <p className="text-xs font-semibold text-yellow-800 mb-1">ℹ️ Nenhum registro encontrado</p>
+                  <p className="text-[10px] text-yellow-700">Um novo registro será criado com os horários informados</p>
+                </div>
+              )}
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">🟢 Entrada</label>
+                  <input
+                    type="time"
+                    value={directForm.checkIn}
+                    onChange={(e) => setDirectForm({ ...directForm, checkIn: e.target.value })}
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">🟡 Saída Almoço</label>
+                  <input
+                    type="time"
+                    value={directForm.lunchOut}
+                    onChange={(e) => setDirectForm({ ...directForm, lunchOut: e.target.value })}
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">🟠 Retorno Almoço</label>
+                  <input
+                    type="time"
+                    value={directForm.lunchIn}
+                    onChange={(e) => setDirectForm({ ...directForm, lunchIn: e.target.value })}
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">🔴 Saída</label>
+                  <input
+                    type="time"
+                    value={directForm.checkOut}
+                    onChange={(e) => setDirectForm({ ...directForm, checkOut: e.target.value })}
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500"
+                  />
+                </div>
               </div>
 
               <div>
@@ -533,18 +639,31 @@ function AdjustmentsContent() {
               <div className="flex gap-3 pt-2">
                 <button
                   type="button"
-                  onClick={() => setShowDirectModal(false)}
+                  onClick={() => {
+                    setShowDirectModal(false);
+                    setDirectForm({ userId: '', entryDate: '', checkIn: '', lunchOut: '', lunchIn: '', checkOut: '', reason: '' });
+                    setExistingEntry(null);
+                  }}
                   className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium py-3 rounded-xl transition"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  disabled={directLoading}
+                  disabled={directLoading || !directForm.userId || !directForm.entryDate}
                   className="flex-1 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-medium py-3 rounded-xl transition disabled:opacity-50 flex items-center justify-center gap-2"
                 >
-                  {directLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
-                  Aplicar Correção
+                  {directLoading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Salvando...
+                    </>
+                  ) : (
+                    <>
+                      <Check className="w-4 h-4" />
+                      {existingEntry ? 'Atualizar Registro' : 'Criar Registro'}
+                    </>
+                  )}
                 </button>
               </div>
             </form>
