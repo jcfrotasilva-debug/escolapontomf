@@ -23,14 +23,14 @@ export const timeEntries = pgTable('time_entries', {
   id: integer('id').primaryKey().generatedAlwaysAsIdentity(),
   userId: integer('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   entryDate: date('entry_date').notNull(), // Data no formato YYYY-MM-DD (timezone Brasil)
-  checkIn: timestamp('check_in'),
-  lunchOut: timestamp('lunch_out'),
-  lunchIn: timestamp('lunch_in'),
-  checkOut: timestamp('check_out'),
+  checkIn: timestamp('check_in', { withTimezone: true }),
+  lunchOut: timestamp('lunch_out', { withTimezone: true }),
+  lunchIn: timestamp('lunch_in', { withTimezone: true }),
+  checkOut: timestamp('check_out', { withTimezone: true }),
   status: varchar('status', { length: 20 }).notNull().default('pending'), // pending, approved, rejected
   notes: text('notes'),
-  createdAt: timestamp('created_at').defaultNow(),
-  updatedAt: timestamp('updated_at').defaultNow(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 });
 
 export const justifications = pgTable('justifications', {

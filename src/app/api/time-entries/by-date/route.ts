@@ -34,7 +34,18 @@ export async function GET(request: Request) {
       )
       .then((rows) => rows[0]);
 
-    return NextResponse.json({ entry: entry || null });
+    // Converter objetos Date para strings ISO para preservar o fuso horário
+    const formattedEntry = entry ? {
+      ...entry,
+      checkIn: entry.checkIn ? entry.checkIn.toISOString() : null,
+      lunchOut: entry.lunchOut ? entry.lunchOut.toISOString() : null,
+      lunchIn: entry.lunchIn ? entry.lunchIn.toISOString() : null,
+      checkOut: entry.checkOut ? entry.checkOut.toISOString() : null,
+    } : null;
+
+    console.log('[GET TIME ENTRY] Entry formatada:', formattedEntry);
+
+    return NextResponse.json({ entry: formattedEntry });
   } catch (error: any) {
     console.error('[GET TIME ENTRY ERROR]', {
       message: error?.message,

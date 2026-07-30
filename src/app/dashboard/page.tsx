@@ -67,7 +67,10 @@ function DashboardContent() {
   const [showJustificationModal, setShowJustificationModal] = useState(false);
   const [justificationReason, setJustificationReason] = useState('');
   const [loadingJustification, setLoadingJustification] = useState(false);
-  const [activeTab, setActiveTab] = useState<'ponto' | 'historico' | 'justificativas' | 'retificacoes'>('ponto');
+  const [activeTab, setActiveTab] = useState<'ponto' | 'historico' | 'justificativas' | 'retificacoes' | 'jornada'>('ponto');
+
+  // Jornada semanal
+  const [journeyData, setJourneyData] = useState<any>(null);
 
   // Estado para modal de alteração de senha
   const [showPasswordModal, setShowPasswordModal] = useState(false);
@@ -228,6 +231,18 @@ function DashboardContent() {
       if (res.ok) {
         const data = await res.json();
         setHoursBalance(data.summary);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  async function fetchJourney() {
+    try {
+      const res = await fetch('/api/journey');
+      if (res.ok) {
+        const data = await res.json();
+        setJourneyData(data);
       }
     } catch (e) {
       console.error(e);
@@ -566,6 +581,20 @@ function DashboardContent() {
             <Edit2 className="w-4 h-4" />
             Retificações
           </button>
+          <button
+            onClick={() => {
+              setActiveTab('jornada');
+              fetchJourney();
+            }}
+            className={`flex-1 min-w-max flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-medium text-sm transition ${
+              activeTab === 'jornada'
+                ? 'bg-gradient-to-r from-blue-700 to-indigo-700 text-white shadow'
+                : 'text-slate-600 hover:bg-slate-100'
+            }`}
+          >
+            <Calendar className="w-4 h-4" />
+            Jornada Semanal
+          </button>
         </div>
 
         {/* Conteúdo das tabs */}
@@ -859,6 +888,121 @@ function DashboardContent() {
                 </div>
               )}
             </div>
+          </div>
+        )}
+
+        {activeTab === 'jornada' && (
+          <div>
+            {journeyData ? (
+              <>
+                {/* Resumo da Jornada Semanal */}
+                <div className={`rounded-3xl p-6 mb-6 ${
+                  journeyData.weekly.completed
+                    ? 'bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-green-300'
+                    : 'bg-gradient-to-br from-red-50 to-rose-50 border-2 border-red-300'
+                }`}>
+                  <div className="flex items-start gap-4">
+                    <div className={`w-16 h-16 rounded-2xl flex items-center justify-center ${
+                      journeyData.weekly.completed
+                        ? 'bg-gradient-to-br from-green-500 to-emerald-600'
+                        : 'bg-gradient-to-br from-red-500 to-rose-600'
+                    }`}>
+                      <Calendar className="w-8 h-8 text-white" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-xl font-bold text-slate-900 mb-2">
+                        {journeyData.weekly.completed ? '✓ Jornada Semanal Cumprida!' : '✗ Jornada Semanal Pendente'}
+                      </h3>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4">
+                        <div>
+                          <p className="text-xs text-slate-500 font-medium">Esperado</p>
+                          <p className="text-lg font-bold text-slate-900">{journeyData.weekly.expectedHours}h</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-slate-500 font-medium">Trabalhado</p>
+                          <p className="text-lg font-bold text-slate-900">{journeyData.weekly.workedHours}h</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-slate-500 font-medium">Saldo</p>
+                          <p className={`text-lg font-bold ${
+                            journeyData.weekly.balance >= 0 ? 'text-green-700' : 'text-red-700'
+                          }`}>
+                            {journeyData.weekly.balance > 0 ? '+' : ''}{journeyData.weekly.balance}h
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-slate-500 font-medium">Meta Diária</p>
+                          <p className="text-lg font-bold text-slate-900">{journeyData.daily.expectedHours}h</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Breakdown Diário */}
+                <div className="bg-white rounded-3xl shadow-lg border border-slate-200 p-6 sm:p-8">
+                  <h2 className="text-xl font-bold text-slate-900 mb-6">Detalhamento Diário</h2>
+                  <div className="space-y-3">
+                    {journeyData.dailyBreakdown.map((day: any) => (
+                      <div
+                        key={day.date}
+                        className={`border-2 rounded-xl p-4 ${
+                          day.hoursWorked === 0 && !day.hasEntry
+                            ? 'border-slate-200 bg-slate-50'
+                            : day.completed
+                            ? 'border-green-300 bg-green-50'
+                            : 'border-red-300 bg-red-50'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <div>
+                            <p className="font-semibold text-slate-900">
+                              {day.weekdayName} - {formatDateBR(day.date)}
+                            </p>
+                          </div>
+                          {day.hasEntry && (
+                            <div className="flex items-center gap-2">
+                              {day.completed ? (
+                                <CheckCircle2 className="w-5 h-5 text-green-600" />
+                              ) : (
+                                <AlertCircle className="w-5 h-5 text-red-600" />
+                              )}
+                            </div>
+                          )}
+                        </div>
+                        <div className="grid grid-cols-3 gap-2 text-sm">
+                          <div>
+                            <p className="text-xs text-slate-500">Esperado</p>
+                            <p className="font-semibold text-slate-900">{day.expectedHours}h</p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-slate-500">Trabalhado</p>
+                            <p className={`font-semibold ${
+                              day.completed ? 'text-green-700' : day.hoursWorked === 0 ? 'text-slate-400' : 'text-red-700'
+                            }`}>
+                              {day.hoursWorked}h
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-slate-500">Status</p>
+                            <p className={`font-semibold ${
+                              day.completed ? 'text-green-700' : day.hoursWorked === 0 ? 'text-slate-400' : 'text-red-700'
+                            }`}>
+                              {day.completed ? '✓ Cumprido' : day.hoursWorked === 0 ? 'Sem registro' : '✗ Incompleto'}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className="text-center py-12">
+                <Loader2 className="w-12 h-12 text-slate-300 mx-auto mb-3 animate-spin" />
+                <p className="text-slate-500">Carregando dados da jornada...</p>
+              </div>
+            )}
           </div>
         )}
       </main>

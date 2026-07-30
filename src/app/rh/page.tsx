@@ -483,6 +483,13 @@ function HrContent() {
             color="green"
           />
           <QuickActionCard
+            icon={<Calendar className="w-5 h-5" />}
+            title="📅 Jornada Semanal"
+            description="Verificar cumprimento de jornada"
+            onClick={() => router.push('/rh/jornada')}
+            color="teal"
+          />
+          <QuickActionCard
             icon={<FileText className="w-5 h-5" />}
             title="📄 Folha Ponto v2"
             description="Nova versão da folha ponto mensal"
