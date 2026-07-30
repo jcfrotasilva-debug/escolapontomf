@@ -47,10 +47,30 @@ export function getCurrentBrazilTime(): string {
 
 /**
  * Formata timestamp ISO para hora no Brasil (HH:mm)
+ * Converte corretamente timestamps em UTC para o fuso horário do Brasil
  */
 export function formatTimeInBrazil(isoString: string | null | undefined): string {
   if (!isoString) return '--:--';
-  const d = new Date(isoString);
+  
+  // Garantir que a string seja interpretada como UTC
+  let d: Date;
+  if (typeof isoString === 'string') {
+    // Se não tem sufixo 'Z' ou offset, adicionar 'Z' para interpretar como UTC
+    if (!isoString.endsWith('Z') && !isoString.includes('+') && !isoString.includes('-', 10)) {
+      d = new Date(isoString + 'Z');
+    } else {
+      d = new Date(isoString);
+    }
+  } else {
+    d = isoString as Date;
+  }
+  
+  // Verificar se a data é válida
+  if (isNaN(d.getTime())) {
+    return '--:--';
+  }
+  
+  // Converter para o fuso horário do Brasil
   return d.toLocaleTimeString('pt-BR', {
     timeZone: BRAZIL_TZ,
     hour: '2-digit',
