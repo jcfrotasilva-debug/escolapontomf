@@ -189,37 +189,8 @@ function HrContent() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-100">
-      {/* Header */}
-      <header className="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 shadow-xl border-b border-slate-700">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
-                <Users className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h1 className="text-white font-bold text-lg sm:text-xl">Gestão de Recursos Humanos</h1>
-                <p className="text-slate-400 text-xs sm:text-sm">EE Profa. Marlene Frattini · {currentTime}</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="hidden md:block text-right">
-                <p className="text-white text-sm font-medium">{user.name}</p>
-                <p className="text-slate-400 text-xs">Administrador(a) RH</p>
-              </div>
-              <button
-                onClick={logout}
-                className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-3 py-2 rounded-lg transition border border-white/20"
-              >
-                <LogOutIcon className="w-4 h-4" />
-                <span className="hidden sm:inline text-sm">Sair</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+      {/* Conteúdo principal - Header removido, agora vem do layout.tsx */}
+      <main className="px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
         {/* Stats */}
         {stats && (
           <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
@@ -413,97 +384,7 @@ function HrContent() {
           )}
         </div>
 
-        {/* Seção de atalhos rápidos */}
-        <div className="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <QuickActionCard
-            icon={<Clock className="w-5 h-5" />}
-            title="📊 Monitoramento"
-            description="Servidores sem registro hoje"
-            onClick={() => router.push('/rh/monitoramento')}
-            color="red"
-            highlight
-          />
-          <QuickActionCard
-            icon={<AlertCircle className="w-5 h-5" />}
-            title="⚠️ Registros Parciais"
-            description="Servidores presentes com horários faltantes"
-            onClick={() => router.push('/rh/monitoramento-parcial')}
-            color="yellow"
-            highlight
-          />
-          <QuickActionCard
-            icon={<Clock className="w-5 h-5" />}
-            title="⏰ Horários"
-            description="Cadastre horários de TODOS os servidores"
-            onClick={() => router.push('/rh/horarios')}
-            color="blue"
-            highlight
-          />
-          <QuickActionCard
-            icon={<Printer className="w-5 h-5" />}
-            title="📄 Folha Ponto"
-            description="Gere folha ponto A4 (frente + verso)"
-            onClick={() => router.push('/rh/folha-ponto')}
-            color="green"
-            highlight
-          />
-          <QuickActionCard
-            icon={<FileText className="w-5 h-5" />}
-            title="📊 Justificativas"
-            description="Analise e aprove/rejeite solicitações"
-            onClick={() => router.push('/rh/justificativas')}
-            color="amber"
-          />
-          <QuickActionCard
-            icon={<Users className="w-5 h-5" />}
-            title="📈 Relatórios"
-            description="Estatísticas e histórico geral"
-            onClick={() => router.push('/rh/relatorios')}
-            color="purple"
-          />
-          <QuickActionCard
-            icon={<Calendar className="w-5 h-5" />}
-            title="📅 Calendário"
-            description="Feriados, ponto facultativo, férias"
-            onClick={() => router.push('/rh/calendario')}
-            color="orange"
-          />
-          <QuickActionCard
-            icon={<Edit2 className="w-5 h-5" />}
-            title="📝 Retificações"
-            description="Solicitações de correção de ponto"
-            onClick={() => router.push('/rh/retificacoes')}
-            color="amber"
-          />
-          <QuickActionCard
-            icon={<Clock className="w-5 h-5" />}
-            title="⏱️ Saldo de Horas"
-            description="Superávit/déficit dos servidores"
-            onClick={() => router.push('/rh/saldo-horas')}
-            color="green"
-          />
-          <QuickActionCard
-            icon={<Calendar className="w-5 h-5" />}
-            title="📅 Jornada Semanal"
-            description="Verificar cumprimento de jornada"
-            onClick={() => router.push('/rh/jornada')}
-            color="teal"
-          />
-          <QuickActionCard
-            icon={<FileText className="w-5 h-5" />}
-            title="📄 Folha Ponto v2"
-            description="Nova versão da folha ponto mensal"
-            onClick={() => router.push('/rh/relatorios/folha-ponto')}
-            color="indigo"
-          />
-          <QuickActionCard
-            icon={<Settings className="w-5 h-5" />}
-            title="⚙️ Configurações"
-            description="Brasão, backup e restauração"
-            onClick={() => router.push('/rh/configuracoes')}
-            color="slate"
-          />
-        </div>
+        {/* Seção de atalhos rápidos removida - agora usar menu lateral */}
       </main>
 
       {/* Modais */}
