@@ -40,6 +40,7 @@ function MonitoringContent() {
   const [loading, setLoading] = useState(true);
   const [currentTime, setCurrentTime] = useState(getCurrentBrazilTime());
   const [currentDate, setCurrentDate] = useState(getCurrentBrazilDate());
+  const [selectedDate, setSelectedDate] = useState(getCurrentBrazilDate());
   const [filter, setFilter] = useState<'all' | 'registered' | 'not_registered' | 'absent'>('all');
 
   useEffect(() => {
@@ -52,7 +53,7 @@ function MonitoringContent() {
     if (user?.role === 'hr') {
       fetchStatus();
     }
-  }, [user]);
+  }, [user, selectedDate]);
 
   // Atualizar relógio a cada segundo
   useEffect(() => {
@@ -66,7 +67,7 @@ function MonitoringContent() {
   async function fetchStatus() {
     setLoading(true);
     try {
-      const res = await fetch('/api/monitoring');
+      const res = await fetch(`/api/monitoring?date=${selectedDate}`);
       if (!res.ok) throw new Error('Erro ao buscar monitoramento');
       const data = await res.json();
 
@@ -152,10 +153,10 @@ function MonitoringContent() {
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             <div>
               <p className="text-slate-500 text-xs font-semibold tracking-widest uppercase mb-1">
-                Data e Horário Atual
+                Data Selecionada
               </p>
               <p className="text-slate-800 text-sm capitalize">
-                {new Date(`${currentDate}T12:00:00-03:00`).toLocaleDateString('pt-BR', {
+                {new Date(`${selectedDate}T12:00:00-03:00`).toLocaleDateString('pt-BR', {
                   weekday: 'long',
                   day: '2-digit',
                   month: 'long',
@@ -163,11 +164,22 @@ function MonitoringContent() {
                 })}
               </p>
             </div>
-            <div className="text-center">
-              <div className="font-mono text-5xl font-bold bg-gradient-to-br from-blue-700 to-indigo-800 bg-clip-text text-transparent tracking-tight">
-                {currentTime}
+            <div className="flex flex-col sm:flex-row items-center gap-4">
+              <div>
+                <label className="text-xs text-slate-500 font-semibold">Selecionar Data:</label>
+                <input
+                  type="date"
+                  value={selectedDate}
+                  onChange={(e) => setSelectedDate(e.target.value)}
+                  className="ml-2 px-3 py-1.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
               </div>
-              <p className="text-xs text-slate-400 mt-1">Horário oficial do Brasil</p>
+              <div className="text-center">
+                <div className="font-mono text-5xl font-bold bg-gradient-to-br from-blue-700 to-indigo-800 bg-clip-text text-transparent tracking-tight">
+                  {currentTime}
+                </div>
+                <p className="text-xs text-slate-400 mt-1">Horário oficial do Brasil</p>
+              </div>
             </div>
           </div>
         </div>
