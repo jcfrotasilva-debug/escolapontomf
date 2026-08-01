@@ -74,16 +74,14 @@ export async function PATCH(request: Request) {
       );
     }
 
-    // Função para converter hora (HH:MM) para objeto Date
-    // O JavaScript irá criar um objeto Date que o Drizzle ORM converterá corretamente
+    // Função para converter hora (HH:MM) para objeto Date no fuso horário do Brasil
+    // Cria um timestamp ISO com timezone -03:00 (Brasil)
     const timeToDate = (time: string | null, date: string): Date | null => {
       if (!time || time === 'null' || time === '') return null;
       // Formato esperado: YYYY-MM-DD e HH:MM
-      // Cria um objeto Date com o horário local do servidor
-      // O Drizzle ORM irá converter para o fuso horário do banco de dados
-      const [hours, minutes] = time.split(':').map(Number);
-      const [year, month, day] = date.split('-').map(Number);
-      return new Date(year, month - 1, day, hours, minutes, 0);
+      // Cria um timestamp ISO com timezone do Brasil (-03:00)
+      const isoString = `${date}T${time}:00-03:00`;
+      return new Date(isoString);
     };
 
     // Preparar dados para atualização
