@@ -84,6 +84,15 @@ type ReportData = {
     adjustmentType: string;
     adjustmentDate: string;
   }>;
+  partialAbsenceJustifications: Array<{
+    id: number;
+    entryDate: string;
+    missingHours: string;
+    justificationType: string;
+    justificationDescription: string;
+    documentRef: string | null;
+    isNonDiscountable: boolean;
+  }>;
   days: Array<{
     date: string;
     weekday: number;
@@ -606,6 +615,29 @@ function FolhaPontoContent() {
                           )}
                         </li>
                       ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Justificativas de Ausências Parciais (RH) */}
+              {(report.partialAbsenceJustifications || []).length > 0 && (
+                <div className="border-2 border-green-300 rounded-lg p-2 mb-2">
+                  <h3 className="text-[8px] font-bold text-slate-700 uppercase tracking-wider mb-1">
+                    ✅ Justificativas de Ausências Parciais (Não Descontáveis)
+                  </h3>
+                  <ul className="space-y-1 text-[9px]">
+                    {(report.partialAbsenceJustifications || []).map((just: any) => (
+                      <li key={just.id} className="flex items-start gap-1 pb-1 border-b border-green-100 last:border-b-0 last:pb-0">
+                        <span className="font-bold">{formatDateBR(just.entryDate)}</span>
+                        <span className="text-slate-500">—</span>
+                        <span>{just.missingHours} faltantes</span>
+                        <span className="text-slate-500">—</span>
+                        <span>{just.justificationType === 'medical' ? '🏥 Médica' : just.justificationType === 'personal' ? '👤 Pessoal' : just.justificationType === 'family' ? '👨‍👩‍👧 Familiar' : '📝 Outro'}</span>
+                        {just.isNonDiscountable && (
+                          <span className="text-green-700 font-bold">— Não Descontável</span>
+                        )}
+                      </li>
+                    ))}
                   </ul>
                 </div>
               )}

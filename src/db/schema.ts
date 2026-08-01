@@ -113,6 +113,23 @@ export const timeEntryAdjustments = pgTable('time_entry_adjustments', {
   createdAt: timestamp('created_at').defaultNow(), // Quando foi solicitada/criada
 });
 
+// Justificativas de Ausências Parciais (RH justifica horas faltantes para não descontar)
+export const partialAbsenceJustifications = pgTable('partial_absence_justifications', {
+  id: integer('id').primaryKey().generatedAlwaysAsIdentity(),
+  timeEntryId: integer('time_entry_id').notNull().references(() => timeEntries.id, { onDelete: 'cascade' }),
+  userId: integer('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  entryDate: date('entry_date').notNull(), // Data da ausência parcial
+  missingHours: varchar('missing_hours', { length: 10 }).notNull(), // Horas faltantes: "2h", "1h30min"
+  justificationType: varchar('justification_type', { length: 30 }).notNull(), // 'medical', 'personal', 'family', 'other'
+  justificationDescription: text('justification_description').notNull(), // Descrição detalhada
+  documentRef: text('document_ref'), // Número do atestado/documento
+  justifiedById: integer('justified_by_id').references(() => users.id), // RH que justificou
+  justifiedDate: timestamp('justified_date').defaultNow(), // Quando foi justificada
+  isNonDiscountable: boolean('is_non_discountable').default(true), // Se não será descontado do pagamento
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+});
+
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
 export type TimeEntry = typeof timeEntries.$inferSelect;

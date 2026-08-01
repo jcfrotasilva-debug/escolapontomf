@@ -132,6 +132,26 @@ export async function GET(request: Request) {
       monthAdjustments = [];
     }
 
+    // Busca justificativas de ausências parciais do mês
+    let monthPartialAbsenceJustifications: any[] = [];
+    try {
+      const { partialAbsenceJustifications } = await import('@/db/schema');
+      monthPartialAbsenceJustifications = await db
+        .select()
+        .from(partialAbsenceJustifications)
+        .where(
+          and(
+            eq(partialAbsenceJustifications.userId, targetUserId),
+            gte(partialAbsenceJustifications.entryDate, startDate),
+            lte(partialAbsenceJustifications.entryDate, endDate)
+          )
+        )
+        .orderBy(asc(partialAbsenceJustifications.entryDate));
+    } catch (justificationError) {
+      console.warn('Erro ao buscar justificativas de ausências parciais (tabela pode não existir):', justificationError);
+      monthPartialAbsenceJustifications = [];
+    }
+
     // Gerar lista completa de dias do mês com status
     type DayType = {
       date: string;
@@ -217,6 +237,7 @@ export async function GET(request: Request) {
       occurrences: monthOccurrences,
       absences: monthAbsences,
       adjustments: monthAdjustments,
+      partialAbsenceJustifications: monthPartialAbsenceJustifications,
     });
   } catch (error) {
     console.error('Erro ao gerar relatório:', error);

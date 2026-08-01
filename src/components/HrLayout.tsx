@@ -16,6 +16,7 @@ import {
   LogOut,
   ChevronDown,
   ChevronRight,
+  Shield,
 } from 'lucide-react';
 
 type HrLayoutProps = {
@@ -73,6 +74,11 @@ export function HrLayout({ children, user, onLogout, onNewServer }: HrLayoutProp
       label: 'Configurações',
       icon: <Settings className="w-5 h-5" />,
       path: '/rh/configuracoes',
+    },
+    {
+      label: 'Just. Ausências Parciais',
+      icon: <Shield className="w-5 h-5" />,
+      path: '/rh/partial-absence-justifications',
     },
   ];
 

@@ -5,5 +5,4 @@
   "installCommand": "npm install",
   "framework": "nextjs",
   "regions": ["gru1"]
-  
 }

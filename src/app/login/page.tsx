@@ -78,9 +78,6 @@ export default function LoginPage() {
             <div className="w-20 h-20 bg-white/10 backdrop-blur-sm rounded-2xl flex items-center justify-center border border-white/20 mb-6">
               <GraduationCap className="w-10 h-10 text-yellow-400" />
             </div>
-            <p className="text-yellow-400 font-semibold text-sm tracking-widest uppercase mb-3">
-              Governo do Estado de São Paulo
-            </p>
             <h1 className="text-5xl font-bold leading-tight mb-4">
               EE Profa.
               <br />
