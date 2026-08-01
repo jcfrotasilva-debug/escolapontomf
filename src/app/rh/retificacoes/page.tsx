@@ -69,6 +69,11 @@ function AdjustmentsContent() {
     lunchIn: '',
     checkOut: '',
     reason: '',
+    partialAbsence: false,
+    partialAbsenceType: '',
+    partialAbsenceDuration: '',
+    partialAbsencePeriod: '',
+    partialAbsenceDescription: '',
   });
   const [existingEntry, setExistingEntry] = useState<any>(null);
   const [entryLoading, setEntryLoading] = useState(false);
@@ -232,12 +237,30 @@ function AdjustmentsContent() {
           lunchOut: directForm.lunchOut || null,
           lunchIn: directForm.lunchIn || null,
           checkOut: directForm.checkOut || null,
+          partialAbsence: directForm.partialAbsence || false,
+          partialAbsenceType: directForm.partialAbsenceType || null,
+          partialAbsenceDuration: directForm.partialAbsenceDuration || null,
+          partialAbsencePeriod: directForm.partialAbsencePeriod || null,
+          partialAbsenceDescription: directForm.partialAbsenceDescription || null,
         }),
       });
       
       if (res.ok) {
         setShowDirectModal(false);
-        setDirectForm({ userId: '', entryDate: '', checkIn: '', lunchOut: '', lunchIn: '', checkOut: '', reason: '' });
+        setDirectForm({ 
+          userId: '', 
+          entryDate: '', 
+          checkIn: '', 
+          lunchOut: '', 
+          lunchIn: '', 
+          checkOut: '', 
+          reason: '',
+          partialAbsence: false,
+          partialAbsenceType: '',
+          partialAbsenceDuration: '',
+          partialAbsencePeriod: '',
+          partialAbsenceDescription: '',
+        });
         setExistingEntry(null);
         fetchAdjustments();
         alert('Registro atualizado com sucesso!');
@@ -643,7 +666,20 @@ function AdjustmentsContent() {
                   type="button"
                   onClick={() => {
                     setShowDirectModal(false);
-                    setDirectForm({ userId: '', entryDate: '', checkIn: '', lunchOut: '', lunchIn: '', checkOut: '', reason: '' });
+                    setDirectForm({ 
+                      userId: '', 
+                      entryDate: '', 
+                      checkIn: '', 
+                      lunchOut: '', 
+                      lunchIn: '', 
+                      checkOut: '', 
+                      reason: '',
+                      partialAbsence: false,
+                      partialAbsenceType: '',
+                      partialAbsenceDuration: '',
+                      partialAbsencePeriod: '',
+                      partialAbsenceDescription: '',
+                    });
                     setExistingEntry(null);
                   }}
                   className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium py-3 rounded-xl transition"

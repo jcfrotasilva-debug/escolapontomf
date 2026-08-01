@@ -42,13 +42,30 @@ export async function GET(request: Request) {
       whereClauses.push(eq(timeEntryAdjustments.status, statusParam));
     }
 
-    if (monthParam) {
-      const [y, m] = monthParam.split('-').map(Number);
-      const startDate = `${y}-${String(m).padStart(2, '0')}-01`;
-      const lastDay = new Date(y, m, 0).getDate();
-      const endDate = `${y}-${String(m).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
-      whereClauses.push(gte(timeEntryAdjustments.entryDate, startDate));
-      whereClauses.push(lte(timeEntryAdjustments.entryDate, endDate));
+    // Para RH, se não houver filtro de mês, retorna todas as pendentes
+    if (session.role === 'hr') {
+      if (monthParam) {
+        const [y, m] = monthParam.split('-').map(Number);
+        const startDate = `${y}-${String(m).padStart(2, '0')}-01`;
+        const lastDay = new Date(y, m, 0).getDate();
+        const endDate = `${y}-${String(m).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+        // Filtrar por entryDate (data do registro original) OU createdAt (quando foi solicitado)
+        whereClauses.push(
+          or(
+            and(
+              gte(timeEntryAdjustments.entryDate, startDate),
+              lte(timeEntryAdjustments.entryDate, endDate)
+            ),
+            and(
+              gte(timeEntryAdjustments.createdAt, new Date(startDate)),
+              lte(timeEntryAdjustments.createdAt, new Date(endDate + 'T23:59:59'))
+            )
+          )!
+        );
+      } else if (!statusParam || statusParam === 'pending') {
+        // Se não houver filtro de mês, mostrar apenas as pendentes
+        whereClauses.push(eq(timeEntryAdjustments.status, 'pending'));
+      }
     }
 
     console.log('[ADJUSTMENTS GET] Executando query com', whereClauses.length, 'cláusulas WHERE');

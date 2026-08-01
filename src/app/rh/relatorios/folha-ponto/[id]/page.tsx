@@ -585,6 +585,31 @@ function FolhaPontoContent() {
                 </div>
               )}
 
+              {/* Ausências Parciais */}
+              {report.entries.some((e: any) => e.partialAbsence) && (
+                <div className="border-2 border-pink-300 rounded-lg p-2 mb-2">
+                  <h3 className="text-[8px] font-bold text-slate-700 uppercase tracking-wider mb-1">
+                    ⚕️ Ausências Parciais no Período
+                  </h3>
+                  <ul className="space-y-1 text-[9px]">
+                    {report.entries
+                      .filter((e: any) => e.partialAbsence)
+                      .map((e: any) => (
+                        <li key={e.id} className="flex items-start gap-1 pb-1 border-b border-pink-100 last:border-b-0 last:pb-0">
+                          <span className="font-bold">{formatDateBR(e.entryDate)}</span>
+                          <span className="text-slate-500">—</span>
+                          <span>{e.partialAbsenceType || 'Ausência'}</span>
+                          <span className="text-slate-500">({e.partialAbsenceDuration})</span>
+                          <span className="text-slate-500">— {e.partialAbsencePeriod}</span>
+                          {e.partialAbsenceDescription && (
+                            <span className="text-slate-500">: {e.partialAbsenceDescription}</span>
+                          )}
+                        </li>
+                      ))}
+                  </ul>
+                </div>
+              )}
+
               {/* Justificativas */}
               {report.justifications.length > 0 && (
                 <div className="space-y-2">

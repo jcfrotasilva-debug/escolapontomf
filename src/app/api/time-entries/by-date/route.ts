@@ -65,7 +65,19 @@ export async function PATCH(request: Request) {
     }
 
     const body = await request.json();
-    const { userId, entryDate, checkIn, lunchOut, lunchIn, checkOut } = body;
+    const { 
+      userId, 
+      entryDate, 
+      checkIn, 
+      lunchOut, 
+      lunchIn, 
+      checkOut,
+      partialAbsence,
+      partialAbsenceType,
+      partialAbsenceDuration,
+      partialAbsencePeriod,
+      partialAbsenceDescription
+    } = body;
 
     if (!userId || !entryDate) {
       return NextResponse.json(
@@ -106,16 +118,26 @@ export async function PATCH(request: Request) {
       updateData.checkOut = timeToDate(checkOut, entryDate);
     }
 
+    // Registrar ausência parcial se informada
+    if (partialAbsence !== undefined) {
+      updateData.partialAbsence = partialAbsence;
+      updateData.partialAbsenceType = partialAbsenceType || null;
+      updateData.partialAbsenceDuration = partialAbsenceDuration || null;
+      updateData.partialAbsencePeriod = partialAbsencePeriod || null;
+      updateData.partialAbsenceDescription = partialAbsenceDescription || null;
+    }
+
     console.log('[PATCH TIME ENTRY] Verificação de valores:', {
       hasCheckIn, hasLunchOut, hasLunchIn, hasCheckOut,
-      checkIn, lunchOut, lunchIn, checkOut
+      checkIn, lunchOut, lunchIn, checkOut,
+      partialAbsence
     });
 
     // Verificar se há pelo menos um campo para atualizar
-    if (!hasCheckIn && !hasLunchOut && !hasLunchIn && !hasCheckOut) {
+    if (!hasCheckIn && !hasLunchOut && !hasLunchIn && !hasCheckOut && partialAbsence === undefined) {
       console.error('[PATCH TIME ENTRY ERROR] Nenhum campo para atualizar');
       return NextResponse.json(
-        { error: 'Pelo menos um horário deve ser informado' },
+        { error: 'Pelo menos um horário ou ausência parcial deve ser informado' },
         { status: 400 }
       );
     }
@@ -152,6 +174,11 @@ export async function PATCH(request: Request) {
         lunchOut: updateData.lunchOut || null,
         lunchIn: updateData.lunchIn || null,
         checkOut: updateData.checkOut || null,
+        partialAbsence: updateData.partialAbsence || false,
+        partialAbsenceType: updateData.partialAbsenceType || null,
+        partialAbsenceDuration: updateData.partialAbsenceDuration || null,
+        partialAbsencePeriod: updateData.partialAbsencePeriod || null,
+        partialAbsenceDescription: updateData.partialAbsenceDescription || null,
       };
       
       console.log('[PATCH TIME ENTRY] Valores para inserção:', insertValues);

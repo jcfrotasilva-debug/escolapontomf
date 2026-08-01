@@ -29,6 +29,12 @@ export const timeEntries = pgTable('time_entries', {
   checkOut: timestamp('check_out', { withTimezone: true }),
   status: varchar('status', { length: 20 }).notNull().default('pending'), // pending, approved, rejected
   notes: text('notes'),
+  // Campo para registrar ausências parciais durante o expediente
+  partialAbsence: boolean('partial_absence').default(false), // Indica se houve ausência parcial
+  partialAbsenceType: varchar('partial_absence_type', { length: 50 }), // Tipo: médico, dentista, etc
+  partialAbsenceDuration: varchar('partial_absence_duration', { length: 10 }), // Duração: 1h, 2h, 3h
+  partialAbsencePeriod: varchar('partial_absence_period', { length: 20 }), // Período: manhã, tarde
+  partialAbsenceDescription: text('partial_absence_description'), // Descrição detalhada
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 });
