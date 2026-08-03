@@ -435,19 +435,13 @@ function WorkSchedulesContent() {
                                   </td>
                                   <td className="py-2 px-2">
                                     <div className="flex items-center gap-1 justify-center">
-                                      {WEEKDAY_SHORT.map((name, idx) => {
-                                        if (idx === weekday) return null;
-                                        return (
-                                          <button
-                                            key={idx}
-                                            onClick={() => copyScheduleFrom(server.id, idx, [weekday])}
-                                            title={`Copiar de ${WEEKDAY_FULL[idx]}`}
-                                            className="w-7 h-7 bg-slate-200 hover:bg-blue-500 hover:text-white text-slate-600 rounded text-xs font-medium transition"
-                                          >
-                                            {name.charAt(0)}
-                                          </button>
-                                        );
-                                      })}
+                                      <button
+                                        onClick={() => copyScheduleFrom(server.id, weekday, [1, 2, 3, 4, 5].filter(d => d !== weekday))}
+                                        title={`Copiar ${WEEKDAY_FULL[weekday]} para todos os dias úteis`}
+                                        className="w-auto px-2 h-7 bg-blue-100 hover:bg-blue-500 hover:text-white text-blue-700 rounded text-xs font-medium transition"
+                                      >
+                                        Copiar para todos
+                                      </button>
                                     </div>
                                   </td>
                                 </tr>

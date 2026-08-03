@@ -46,6 +46,16 @@ export function getCurrentBrazilTime(): string {
 }
 
 /**
+ * Retorna um objeto Date com a hora atual no fuso horário do Brasil
+ * Importante: Use esta função quando precisar salvar timestamps no banco de dados
+ */
+export function getCurrentBrazilDateTime(): Date {
+  const now = new Date();
+  const brazilTimeStr = now.toLocaleString('en-US', { timeZone: BRAZIL_TZ });
+  return new Date(brazilTimeStr);
+}
+
+/**
  * Formata timestamp ISO para hora no Brasil (HH:mm)
  * Converte corretamente timestamps em UTC para o fuso horário do Brasil
  */

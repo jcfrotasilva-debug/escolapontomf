@@ -3,7 +3,7 @@ import { getSession } from '@/lib/auth';
 import { db } from '@/db';
 import { timeEntries, serverAbsences, dayOccurrences, workSchedules } from '@/db/schema';
 import { and, eq, gte, lte } from 'drizzle-orm';
-import { getCurrentBrazilDate, BRAZIL_TZ } from '@/lib/timezone';
+import { getCurrentBrazilDate, BRAZIL_TZ, getCurrentBrazilDateTime } from '@/lib/timezone';
 
 export async function GET() {
   try {
@@ -41,7 +41,8 @@ export async function POST(request: Request) {
     }
 
     const today = getCurrentBrazilDate();
-    const now = new Date();
+    // Obter hora atual no fuso horário do Brasil
+    const nowInBrazil = getCurrentBrazilDateTime();
 
     // ========================================================================
     // VALIDAÇÃO: Verifica se o servidor tem horário cadastrado para hoje
@@ -52,7 +53,7 @@ export async function POST(request: Request) {
         timeZone: BRAZIL_TZ,
         weekday: 'short',
       });
-      const dayName = formatter.format(now);
+      const dayName = formatter.format(nowInBrazil);
       const dayMap: Record<string, number> = {
         Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6,
       };
@@ -142,7 +143,7 @@ export async function POST(request: Request) {
         .values({
           userId: session.userId,
           entryDate: today,
-          checkIn: now,
+          checkIn: nowInBrazil,
         })
         .returning();
       return NextResponse.json({ entry, message: 'Entrada registrada com sucesso!' });
@@ -164,7 +165,7 @@ export async function POST(request: Request) {
       }
       const [entry] = await db
         .update(timeEntries)
-        .set({ lunchOut: now, updatedAt: now })
+        .set({ lunchOut: nowInBrazil, updatedAt: nowInBrazil })
         .where(eq(timeEntries.id, todayEntry.id))
         .returning();
       return NextResponse.json({ entry, message: 'Saída para almoço registrada!' });
@@ -179,7 +180,7 @@ export async function POST(request: Request) {
       }
       const [entry] = await db
         .update(timeEntries)
-        .set({ lunchIn: now, updatedAt: now })
+        .set({ lunchIn: nowInBrazil, updatedAt: nowInBrazil })
         .where(eq(timeEntries.id, todayEntry.id))
         .returning();
       return NextResponse.json({ entry, message: 'Retorno do almoço registrado!' });
@@ -194,7 +195,7 @@ export async function POST(request: Request) {
       }
       const [entry] = await db
         .update(timeEntries)
-        .set({ checkOut: now, updatedAt: now })
+        .set({ checkOut: nowInBrazil, updatedAt: nowInBrazil })
         .where(eq(timeEntries.id, todayEntry.id))
         .returning();
       return NextResponse.json({ entry, message: 'Saída registrada com sucesso!' });
