@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, FormEvent } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import {
   AuthProvider,
   useAuth,
@@ -52,6 +52,7 @@ type Justification = {
 function DashboardContent() {
   const { user, loading, logout } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
 
   const [currentTime, setCurrentTime] = useState(getCurrentBrazilTime());
   const [currentDate, setCurrentDate] = useState(getCurrentBrazilDate());
@@ -594,6 +595,17 @@ function DashboardContent() {
           >
             <Calendar className="w-4 h-4" />
             Jornada Semanal
+          </button>
+          <button
+            onClick={() => router.push('/dashboard/banco-horas')}
+            className={`flex-1 min-w-max flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-medium text-sm transition ${
+              pathname === '/dashboard/banco-horas'
+                ? 'bg-gradient-to-r from-green-700 to-emerald-700 text-white shadow'
+                : 'text-slate-600 hover:bg-slate-100'
+            }`}
+          >
+            <KeyRound className="w-4 h-4" />
+            Meu Banco de Horas
           </button>
         </div>
 

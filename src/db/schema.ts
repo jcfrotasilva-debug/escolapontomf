@@ -113,6 +113,32 @@ export const timeEntryAdjustments = pgTable('time_entry_adjustments', {
   createdAt: timestamp('created_at').defaultNow(), // Quando foi solicitada/criada
 });
 
+// Banco de Horas - Acumulação de horas trabalhadas
+export const bankOfHours = pgTable('bank_of_hours', {
+  id: integer('id').primaryKey().generatedAlwaysAsIdentity(),
+  userId: integer('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  entryDate: date('entry_date').notNull(),
+  scheduledHours: real('scheduled_hours').notNull(), // Horas programadas no dia
+  workedHours: real('worked_hours').notNull(), // Horas efetivamente trabalhadas
+  balance: real('balance').notNull(), // Saldo do dia (worked - scheduled)
+  accumulatedBalance: real('accumulated_balance').notNull(), // Saldo acumulado até o dia
+  type: varchar('type', { length: 20 }).notNull(), // 'credit' ou 'debt'
+  notes: text('notes'),
+  createdAt: timestamp('created_at').defaultNow(),
+});
+
+// Conversões de Banco de Horas
+export const bankOfHoursConversions = pgTable('bank_of_hours_conversions', {
+  id: integer('id').primaryKey().generatedAlwaysAsIdentity(),
+  userId: integer('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  conversionDate: date('conversion_date').notNull(),
+  hoursConverted: real('hours_converted').notNull(),
+  daysEarned: real('days_earned').notNull(),
+  type: varchar('type', { length: 20 }).notNull(), // 'used' (folga usada) ou 'expired' (horas expiraram)
+  notes: text('notes'),
+  createdAt: timestamp('created_at').defaultNow(),
+});
+
 // Justificativas de Ausências Parciais (RH justifica horas faltantes para não descontar)
 export const partialAbsenceJustifications = pgTable('partial_absence_justifications', {
   id: integer('id').primaryKey().generatedAlwaysAsIdentity(),

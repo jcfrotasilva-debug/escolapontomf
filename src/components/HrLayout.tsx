@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import {
+import { 
   Home,
   Users,
   FileText,
@@ -17,6 +17,7 @@ import {
   ChevronDown,
   ChevronRight,
   Shield,
+  DollarSign,
 } from 'lucide-react';
 
 type HrLayoutProps = {
@@ -59,6 +60,11 @@ export function HrLayout({ children, user, onLogout, onNewServer }: HrLayoutProp
       label: 'Retificações',
       icon: <Edit2 className="w-5 h-5" />,
       path: '/rh/retificacoes',
+    },
+    {
+      label: 'Banco de Horas',
+      icon: <DollarSign className="w-5 h-5" />,
+      path: '/rh/banco-horas',
     },
     {
       label: 'Jornada Semanal',
