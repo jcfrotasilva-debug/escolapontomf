@@ -27,6 +27,10 @@ import {
   Shield,
   Edit2,
   Send,
+  DollarSign,
+  TrendingUp,
+  TrendingDown,
+  XCircle,
 } from 'lucide-react';
 import { formatTimeInBrazil, formatDateBR, getCurrentBrazilDate, getCurrentBrazilTime, calculateWorkedHours, formatBrazilDateTime } from '@/lib/timezone';
 
@@ -56,6 +60,16 @@ function DashboardContent() {
 
   const [currentTime, setCurrentTime] = useState(getCurrentBrazilTime());
   const [currentDate, setCurrentDate] = useState(getCurrentBrazilDate());
+  const [bankData, setBankData] = useState<any>(null);
+
+  // Função para formatar horas
+  const formatHours = (hours: number): string => {
+    const sign = hours >= 0 ? '+' : '';
+    const absHours = Math.abs(hours);
+    const h = Math.floor(absHours);
+    const m = Math.round((absHours - h) * 60);
+    return `${sign}${h}h${m.toString().padStart(2, '0')}`;
+  };
   const [todayEntry, setTodayEntry] = useState<TimeEntry | null>(null);
   const [loadingEntry, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -68,7 +82,7 @@ function DashboardContent() {
   const [showJustificationModal, setShowJustificationModal] = useState(false);
   const [justificationReason, setJustificationReason] = useState('');
   const [loadingJustification, setLoadingJustification] = useState(false);
-  const [activeTab, setActiveTab] = useState<'ponto' | 'historico' | 'justificativas' | 'retificacoes' | 'jornada'>('ponto');
+  const [activeTab, setActiveTab] = useState<'ponto' | 'historico' | 'justificativas' | 'retificacoes' | 'jornada' | 'banco-horas'>('ponto');
 
   // Jornada semanal
   const [journeyData, setJourneyData] = useState<any>(null);
@@ -228,10 +242,10 @@ function DashboardContent() {
 
   async function fetchHoursBalance() {
     try {
-      const res = await fetch('/api/reports/hours-balance');
+      const res = await fetch('/api/bank-of-hours');
       if (res.ok) {
         const data = await res.json();
-        setHoursBalance(data.summary);
+        setBankData(data);
       }
     } catch (e) {
       console.error(e);
@@ -1015,6 +1029,192 @@ function DashboardContent() {
                 <p className="text-slate-500">Carregando dados da jornada...</p>
               </div>
             )}
+          </div>
+        )}
+
+        {activeTab === 'banco-horas' && (
+          <div>
+            <div className="bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-green-300 rounded-3xl p-6 mb-6">
+              <div className="flex items-start gap-4">
+                <div className="w-16 h-16 rounded-2xl flex items-center justify-center bg-gradient-to-br from-green-500 to-emerald-600">
+                  <DollarSign className="w-8 h-8 text-white" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-xl font-bold text-slate-900 mb-2">
+                    Meu Banco de Horas
+                  </h3>
+                  <p className="text-slate-700">
+                    Acompanhe suas horas extras, saldo acumulado e dias de folga disponíveis.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Resumo do Banco de Horas */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+              <div className="bg-white rounded-xl shadow-sm border-l-4 border-l-blue-500 p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-slate-600 mb-1">Saldo Total</p>
+                    <p className="text-2xl font-bold text-blue-600">
+                      {bankData?.summary?.totalBalance ? formatHours(bankData.summary.totalBalance) : '0h00'}
+                    </p>
+                  </div>
+                  <DollarSign className="w-8 h-8 text-blue-500" />
+                </div>
+              </div>
+
+              <div className="bg-white rounded-xl shadow-sm border-l-4 border-l-green-500 p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-slate-600 mb-1">Total Créditos</p>
+                    <p className="text-2xl font-bold text-green-600">
+                      {bankData?.summary?.totalCredits ? formatHours(bankData.summary.totalCredits) : '0h00'}
+                    </p>
+                  </div>
+                  <TrendingUp className="w-8 h-8 text-green-500" />
+                </div>
+              </div>
+
+              <div className="bg-white rounded-xl shadow-sm border-l-4 border-l-red-500 p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-slate-600 mb-1">Total Débitos</p>
+                    <p className="text-2xl font-bold text-red-600">
+                      {bankData?.summary?.totalDebts ? formatHours(bankData.summary.totalDebts) : '0h00'}
+                    </p>
+                  </div>
+                  <TrendingDown className="w-8 h-8 text-red-500" />
+                </div>
+              </div>
+
+              <div className="bg-white rounded-xl shadow-sm border-l-4 border-l-purple-500 p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-slate-600 mb-1">Dias de Folga</p>
+                    <p className="text-2xl font-bold text-purple-600">
+                      {bankData?.summary?.daysFromBalance ? bankData.summary.daysFromBalance.toFixed(2) : '0.00'}
+                    </p>
+                  </div>
+                  <Calendar className="w-8 h-8 text-purple-500" />
+                </div>
+              </div>
+            </div>
+
+            {/* Alertas */}
+            {bankData?.summary?.totalBalance < 0 && (
+              <div className="bg-red-50 border-l-4 border-l-red-500 p-6 mb-6">
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="w-6 h-6 text-red-500 mt-1" />
+                  <div>
+                    <h3 className="font-semibold text-red-900 mb-2">
+                      Atenção: Déficit de Horas
+                    </h3>
+                    <p className="text-red-700">
+                      Você possui um déficit de {formatHours(bankData.summary.totalBalance)}.
+                      É necessário compensar essas horas ou justificar as ausências junto ao RH.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {bankData?.summary?.totalBalance > 0 && (
+              <div className="bg-green-50 border-l-4 border-l-green-500 p-6 mb-6">
+                <div className="flex items-start gap-3">
+                  <CheckCircle2 className="w-6 h-6 text-green-500 mt-1" />
+                  <div>
+                    <h3 className="font-semibold text-green-900 mb-2">
+                      Saldo Positivo
+                    </h3>
+                    <p className="text-green-700">
+                      Você tem {formatHours(bankData.summary.totalBalance)} de horas extras disponíveis.
+                      Isso equivale a aproximadamente {bankData.summary.daysFromBalance.toFixed(2)} dias de folga.
+                      Entre em contato com o RH para verificar a conversão em folgas.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Histórico */}
+            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+              <h2 className="text-lg font-semibold text-slate-900 mb-4">
+                Histórico Diário
+              </h2>
+              {bankData?.entries && bankData.entries.length > 0 ? (
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-slate-50 border-b border-slate-200">
+                      <tr>
+                        <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">
+                          Data
+                        </th>
+                        <th className="px-4 py-3 text-right text-sm font-semibold text-slate-700">
+                          Programado
+                        </th>
+                        <th className="px-4 py-3 text-right text-sm font-semibold text-slate-700">
+                          Trabalhado
+                        </th>
+                        <th className="px-4 py-3 text-right text-sm font-semibold text-slate-700">
+                          Saldo
+                        </th>
+                        <th className="px-4 py-3 text-right text-sm font-semibold text-slate-700">
+                          Acumulado
+                        </th>
+                        <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">
+                          Status
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-200">
+                      {bankData.entries.map((entry: any) => (
+                        <tr key={entry.id} className="hover:bg-slate-50">
+                          <td className="px-4 py-3 text-sm text-slate-900">
+                            {formatDateBR(entry.entryDate)}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-right text-slate-900">
+                            {entry.scheduledHours.toFixed(2)}h
+                          </td>
+                          <td className="px-4 py-3 text-sm text-right text-slate-900">
+                            {entry.workedHours.toFixed(2)}h
+                          </td>
+                          <td className={`px-4 py-3 text-sm text-right font-semibold ${
+                            entry.balance > 0 ? 'text-green-600' :
+                            entry.balance < 0 ? 'text-red-600' : 'text-slate-600'
+                          }`}>
+                            {formatHours(entry.balance)}
+                          </td>
+                          <td className={`px-4 py-3 text-sm text-right font-semibold ${
+                            entry.accumulatedBalance > 0 ? 'text-green-600' :
+                            entry.accumulatedBalance < 0 ? 'text-red-600' : 'text-slate-600'
+                          }`}>
+                            {formatHours(entry.accumulatedBalance)}
+                          </td>
+                          <td className="px-4 py-3 text-sm">
+                            <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
+                              entry.type === 'credit' ? 'bg-green-100 text-green-800' :
+                              entry.type === 'debt' ? 'bg-red-100 text-red-800' :
+                              'bg-slate-100 text-slate-800'
+                            }`}>
+                              {entry.type === 'credit' && <CheckCircle2 className="w-3 h-3" />}
+                              {entry.type === 'debt' && <XCircle className="w-3 h-3" />}
+                              {entry.type === 'credit' ? 'Crédito' :
+                               entry.type === 'debt' ? 'Débito' : 'Neutro'}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <Calendar className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+                  <p className="text-slate-500">Nenhum registro encontrado</p>
+                </div>
+              )}
+            </div>
           </div>
         )}
       </main>

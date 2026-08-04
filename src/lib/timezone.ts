@@ -50,30 +50,40 @@ export function getCurrentBrazilTime(): string {
  * Importante: Use esta função quando precisar salvar timestamps no banco de dados
  */
 export function getCurrentBrazilDateTime(): Date {
+  // Obter data e hora atual no fuso horário do Brasil
   const now = new Date();
-  const brazilTimeStr = now.toLocaleString('en-US', { timeZone: BRAZIL_TZ });
-  return new Date(brazilTimeStr);
+  const formatter = new Intl.DateTimeFormat('en-CA', {
+    timeZone: BRAZIL_TZ,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false,
+  });
+  
+  const parts = formatter.formatToParts(now);
+  const year = parts.find(p => p.type === 'year')!.value;
+  const month = parts.find(p => p.type === 'month')!.value;
+  const day = parts.find(p => p.type === 'day')!.value;
+  const hour = parts.find(p => p.type === 'hour')!.value;
+  const minute = parts.find(p => p.type === 'minute')!.value;
+  const second = parts.find(p => p.type === 'second')!.value;
+  
+  // Criar string ISO com offset do Brasil (-03:00)
+  const brazilISOString = `${year}-${month}-${day}T${hour}:${minute}:${second}-03:00`;
+  return new Date(brazilISOString);
 }
 
 /**
  * Formata timestamp ISO para hora no Brasil (HH:mm)
- * Converte corretamente timestamps em UTC para o fuso horário do Brasil
+ * Converte timestamps para o fuso horário do Brasil
  */
 export function formatTimeInBrazil(isoString: string | null | undefined): string {
   if (!isoString) return '--:--';
   
-  // Garantir que a string seja interpretada como UTC
-  let d: Date;
-  if (typeof isoString === 'string') {
-    // Se não tem sufixo 'Z' ou offset, adicionar 'Z' para interpretar como UTC
-    if (!isoString.endsWith('Z') && !isoString.includes('+') && !isoString.includes('-', 10)) {
-      d = new Date(isoString + 'Z');
-    } else {
-      d = new Date(isoString);
-    }
-  } else {
-    d = isoString as Date;
-  }
+  const d = new Date(isoString);
   
   // Verificar se a data é válida
   if (isNaN(d.getTime())) {
