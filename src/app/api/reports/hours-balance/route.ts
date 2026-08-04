@@ -4,7 +4,7 @@ import { db } from '@/db';
 import { bankOfHours } from '@/db/schema';
 import { eq, and, gte, lte } from 'drizzle-orm';
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
     const session = await getSession();
     
@@ -12,11 +12,24 @@ export async function GET() {
       return NextResponse.json({ error: 'Não autenticado' }, { status: 401 });
     }
 
-    // Buscar dados do banco de horas do servidor
+    const { searchParams } = new URL(request.url);
+    const startDate = searchParams.get('startDate');
+    const endDate = searchParams.get('endDate');
+
+    // Servidor só pode acessar seus próprios dados
+    const conditions = [eq(bankOfHours.userId, session.userId)];
+    
+    if (startDate) {
+      conditions.push(gte(bankOfHours.entryDate, startDate));
+    }
+    if (endDate) {
+      conditions.push(lte(bankOfHours.entryDate, endDate));
+    }
+
     const bankData = await db
       .select()
       .from(bankOfHours)
-      .where(eq(bankOfHours.userId, session.userId))
+      .where(and(...conditions))
       .orderBy(bankOfHours.entryDate);
 
     // Calcular totais

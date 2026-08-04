@@ -42,7 +42,7 @@ export default function BancoHorasPage() {
     setLoading(true);
     try {
       const res = await fetch(
-        `/api/bank-of-hours?userId=${user?.userId}&startDate=${startDate}&endDate=${endDate}`
+        `/api/reports/hours-balance?startDate=${startDate}&endDate=${endDate}`
       );
       const data = await res.json();
       setBankData(data);
