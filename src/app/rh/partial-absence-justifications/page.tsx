@@ -280,8 +280,6 @@ function CreateJustificationModal({
           justificationDescription: form.justificationDescription,
           documentRef: form.documentRef,
           isNonDiscountable: form.isNonDiscountable,
-          // Buscar o timeEntryId do dia
-          timeEntryId: 0, // Placeholder - precisa buscar do banco
         }),
       });
 

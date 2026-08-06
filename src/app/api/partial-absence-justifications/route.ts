@@ -73,7 +73,6 @@ export async function POST(request: Request) {
 
     const body = await request.json();
     const {
-      timeEntryId,
       userId,
       entryDate,
       missingHours,
@@ -84,7 +83,7 @@ export async function POST(request: Request) {
     } = body;
 
     // Validações
-    if (!timeEntryId || !userId || !entryDate || !missingHours || !justificationType || !justificationDescription) {
+    if (!userId || !entryDate || !missingHours || !justificationType || !justificationDescription) {
       return NextResponse.json(
         { error: 'Todos os campos são obrigatórios' },
         { status: 400 }
@@ -97,6 +96,33 @@ export async function POST(request: Request) {
         { error: 'Tipo de justificativa inválido' },
         { status: 400 }
       );
+    }
+
+    // Buscar o timeEntryId baseado em userId e entryDate
+    const timeEntryResult = await db
+      .select()
+      .from(timeEntries)
+      .where(
+        and(
+          eq(timeEntries.userId, parseInt(userId, 10)),
+          eq(timeEntries.entryDate, entryDate)
+        )
+      );
+
+    let timeEntryId: number;
+    if (timeEntryResult && timeEntryResult.length > 0) {
+      timeEntryId = timeEntryResult[0].id;
+    } else {
+      // Se não existir, criar um registro
+      const [newEntry] = await db
+        .insert(timeEntries)
+        .values({
+          userId: parseInt(userId, 10),
+          entryDate,
+          status: 'pending',
+        })
+        .returning();
+      timeEntryId = newEntry.id;
     }
 
     // Criar justificativa

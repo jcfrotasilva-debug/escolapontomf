@@ -12,23 +12,26 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Não autenticado' }, { status: 401 });
     }
 
-    // RH pode acessar dados de qualquer servidor
-    // Servidor só pode acessar seus próprios dados
-    if (session.role !== 'hr') {
-      return NextResponse.json({ error: 'Não autorizado' }, { status: 403 });
-    }
-
     const { searchParams } = new URL(request.url);
-    const userId = searchParams.get('userId');
+    let userId = searchParams.get('userId');
     const startDate = searchParams.get('startDate');
     const endDate = searchParams.get('endDate');
 
-    if (!userId) {
-      return NextResponse.json({ error: 'userId é obrigatório' }, { status: 400 });
+    // RH pode acessar dados de qualquer servidor (precisa enviar userId)
+    // Servidor só pode acessar seus próprios dados (não precisa enviar userId)
+    if (session.role === 'hr') {
+      if (!userId) {
+        return NextResponse.json({ error: 'userId é obrigatório para RH' }, { status: 400 });
+      }
+    } else {
+      // Servidor acessa seus próprios dados
+      userId = session.userId.toString();
     }
 
+    const targetUserId = parseInt(userId, 10);
+
     // Buscar dados do banco de horas do servidor
-    const conditions = [eq(bankOfHours.userId, parseInt(userId))];
+    const conditions = [eq(bankOfHours.userId, targetUserId)];
     
     if (startDate) {
       conditions.push(gte(bankOfHours.entryDate, startDate));

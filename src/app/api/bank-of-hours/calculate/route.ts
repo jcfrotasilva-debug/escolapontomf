@@ -32,11 +32,12 @@ export async function POST(request: Request) {
     }
 
     // Buscar dados do servidor
-    const user = await db
+    const userResult = await db
       .select()
       .from(users)
-      .where(eq(users.id, targetUserId))
-      .then(rows => rows[0]);
+      .where(eq(users.id, targetUserId));
+    
+    const user = userResult[0];
 
     if (!user) {
       return NextResponse.json({ error: 'Usuário não encontrado' }, { status: 404 });
@@ -48,7 +49,7 @@ export async function POST(request: Request) {
     const dailyHours = weeklyHours / 5;
 
     // Buscar registros de ponto do período
-    const entries = await db
+    const entriesResult = await db
       .select()
       .from(timeEntries)
       .where(
@@ -59,9 +60,10 @@ export async function POST(request: Request) {
         )
       )
       .orderBy(asc(timeEntries.entryDate));
+    const entries = entriesResult || [];
 
     // Buscar justificativas aprovadas do período
-    const approvedJustifications = await db
+    const justificationsResult = await db
       .select()
       .from(justifications)
       .where(
@@ -71,11 +73,11 @@ export async function POST(request: Request) {
           gte(justifications.justificationDate, startDate),
           lte(justifications.justificationDate, endDate)
         )
-      )
-      .then(rows => new Set(rows.map(j => j.justificationDate)));
+      );
+    const approvedJustifications = new Set(justificationsResult.map(j => j.justificationDate));
 
     // Buscar ausências parciais justificadas
-    const partialAbsences = await db
+    const partialAbsencesResult = await db
       .select()
       .from(partialAbsenceJustifications)
       .where(
@@ -84,27 +86,28 @@ export async function POST(request: Request) {
           gte(partialAbsenceJustifications.entryDate, startDate),
           lte(partialAbsenceJustifications.entryDate, endDate)
         )
-      )
-      .then(rows => {
-        const map = new Map();
-        rows.forEach(row => {
-          // Parsear "2h", "1h30min", etc
-          const missingHours = row.missingHours || '0h';
-          const hoursMatch = missingHours.match(/(\d+)h/);
-          const hours = hoursMatch ? parseInt(hoursMatch[1]) : 0;
-          const minutesMatch = missingHours.match(/(\d+)min/);
-          const minutes = minutesMatch ? parseInt(minutesMatch[1]) : 0;
-          const totalHours = hours + (minutes / 60);
-          map.set(row.entryDate, totalHours);
-        });
-        return map;
+      );
+    
+    const partialAbsences = new Map();
+    if (partialAbsencesResult && partialAbsencesResult.length > 0) {
+      partialAbsencesResult.forEach(row => {
+        // Parsear "2h", "1h30min", etc
+        const missingHours = row.missingHours || '0h';
+        const hoursMatch = missingHours.match(/(\d+)h/);
+        const hours = hoursMatch ? parseInt(hoursMatch[1]) : 0;
+        const minutesMatch = missingHours.match(/(\d+)min/);
+        const minutes = minutesMatch ? parseInt(minutesMatch[1]) : 0;
+        const totalHours = hours + (minutes / 60);
+        partialAbsences.set(row.entryDate, totalHours);
       });
+    }
 
     // Buscar horários programados
-    const schedules = await db
+    const schedulesResult = await db
       .select()
       .from(workSchedules)
       .where(eq(workSchedules.userId, targetUserId));
+    const schedules = schedulesResult || [];
 
     // Calcular banco de horas dia a dia
     const dailyBalances: Array<{
@@ -255,6 +258,10 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     console.error('Erro ao calcular banco de horas:', error);
-    return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
+    console.error('Stack:', error instanceof Error ? error.stack : 'No stack');
+    return NextResponse.json({ 
+      error: 'Erro interno',
+      details: error instanceof Error ? error.message : 'Erro desconhecido'
+    }, { status: 500 });
   }
 }
