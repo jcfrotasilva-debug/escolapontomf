@@ -368,7 +368,12 @@ function ServerFormModal({
     try {
       const url = server ? `/api/employees/${server.id}` : '/api/employees';
       const method = server ? 'PUT' : 'POST';
-      const body = server ? { ...form } : form;
+      
+      // Garantir que workHours seja sempre um número
+      const body = {
+        ...form,
+        workHours: form.workHours ? Number(form.workHours) : 40,
+      };
 
       const res = await fetch(url, {
         method,
