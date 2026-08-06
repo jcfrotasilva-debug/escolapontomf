@@ -53,7 +53,10 @@ export default function BancoHorasPage() {
 
   useEffect(() => {
     if (user && startDate && endDate) {
-      fetchBankData();
+      // Só busca dados se ainda não tiver dados carregados
+      if (!bankData) {
+        fetchBankData(true); // true = skip automatic calculation on first load
+      }
     }
   }, [user, startDate, endDate]);
 
@@ -64,15 +67,26 @@ export default function BancoHorasPage() {
         `/api/bank-of-hours/calculate?startDate=${startDate}&endDate=${endDate}`,
         { method: 'POST' }
       );
+      
+      if (!res.ok) {
+        const errorData = await res.json();
+        console.error('Erro no cálculo:', errorData);
+        alert('Erro ao calcular banco de horas: ' + (errorData.details || errorData.error));
+        setLoading(false);
+        return;
+      }
+      
       const data = await res.json();
       
       if (data.success) {
-        // Após calcular, buscar os dados atualizados
+        // Após calcular, buscar os dados atualizados (sem recalcular)
         const res2 = await fetch(
           `/api/reports/hours-balance?startDate=${startDate}&endDate=${endDate}`
         );
         const data2 = await res2.json();
         setBankData(data2);
+      } else {
+        alert('Erro ao calcular: ' + (data.error || 'Erro desconhecido'));
       }
     } catch (error) {
       console.error('Erro ao calcular:', error);
@@ -81,17 +95,24 @@ export default function BancoHorasPage() {
     }
   };
 
-  const fetchBankData = async () => {
+  const fetchBankData = async (skipCalculation = false) => {
     setLoading(true);
     try {
       // Primeiro tenta buscar dados existentes
       const res = await fetch(
         `/api/reports/hours-balance?startDate=${startDate}&endDate=${endDate}`
       );
+      
+      if (!res.ok) {
+        console.error('Erro na API:', res.status);
+        setLoading(false);
+        return;
+      }
+      
       const data = await res.json();
       
-      // Se não houver dados, calcula automaticamente
-      if (!data.entries || data.entries.length === 0) {
+      // Se não houver dados e não estiver pulando cálculo, calcula automaticamente
+      if (!skipCalculation && (!data.entries || data.entries.length === 0)) {
         await calculateBankOfHours();
       } else {
         setBankData(data);

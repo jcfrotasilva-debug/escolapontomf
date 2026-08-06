@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { getSession } from '@/lib/auth';
 import { db } from '@/db';
 import { bankOfHours } from '@/db/schema';
-import { eq, and, gte, lte } from 'drizzle-orm';
+import { eq, and, gte, lte, asc } from 'drizzle-orm';
 
 export async function GET(request: Request) {
   try {
@@ -26,11 +26,14 @@ export async function GET(request: Request) {
       conditions.push(lte(bankOfHours.entryDate, endDate));
     }
 
-    const bankData = await db
+    // Buscar dados do banco de horas
+    const bankDataResult = await db
       .select()
       .from(bankOfHours)
       .where(and(...conditions))
-      .orderBy(bankOfHours.entryDate);
+      .orderBy(asc(bankOfHours.entryDate));
+    
+    const bankData = bankDataResult || [];
 
     // Calcular totais
     const totalCredits = bankData
@@ -55,6 +58,11 @@ export async function GET(request: Request) {
     });
   } catch (error) {
     console.error('Erro ao buscar banco de horas:', error);
-    return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
+    console.error('Error details:', error instanceof Error ? error.message : 'Unknown error');
+    console.error('Stack:', error instanceof Error ? error.stack : 'No stack');
+    return NextResponse.json({ 
+      error: 'Erro interno',
+      details: error instanceof Error ? error.message : 'Erro desconhecido'
+    }, { status: 500 });
   }
 }

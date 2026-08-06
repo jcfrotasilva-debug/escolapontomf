@@ -59,7 +59,11 @@ export async function GET(request: Request) {
     return NextResponse.json({ justifications: results });
   } catch (error) {
     console.error('Erro ao listar justificativas:', error);
-    return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
+    console.error('Error details:', error instanceof Error ? error.message : 'Unknown error');
+    return NextResponse.json({ 
+      error: 'Erro interno',
+      details: error instanceof Error ? error.message : 'Erro desconhecido'
+    }, { status: 500 });
   }
 }
 
@@ -156,7 +160,12 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     console.error('Erro ao criar justificativa:', error);
-    return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
+    console.error('Error details:', error instanceof Error ? error.message : 'Unknown error');
+    console.error('Stack:', error instanceof Error ? error.stack : 'No stack');
+    return NextResponse.json({ 
+      error: 'Erro interno',
+      details: error instanceof Error ? error.message : 'Erro desconhecido'
+    }, { status: 500 });
   }
 }
 
