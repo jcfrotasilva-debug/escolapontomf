@@ -104,9 +104,33 @@ export function HrLayout({ children, user, onLogout, onNewServer }: HrLayoutProp
   const isActive = (path: string) => pathname === path;
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen print:block">
+      <style>{`
+        @media print {
+          .print\\:hidden, aside, header, footer, nav {
+            display: none !important;
+          }
+          .print\\:block {
+            display: block !important;
+          }
+          .print\\:ml-0 {
+            margin-left: 0 !important;
+          }
+          .print\\:w-full {
+            width: 100% !important;
+          }
+          div[class*="ml-64"], div[class*="ml-64 print\\:ml-0"] {
+            margin-left: 0 !important;
+            width: 100% !important;
+            padding-left: 0 !important;
+          }
+          body {
+            background: white !important;
+          }
+        }
+      `}</style>
       {/* Sidebar */}
-      <aside className="fixed left-0 top-0 h-screen w-64 bg-gradient-to-b from-blue-900 via-blue-800 to-blue-900 text-white shadow-2xl z-40 flex flex-col">
+      <aside className="fixed left-0 top-0 h-screen w-64 bg-gradient-to-b from-blue-900 via-blue-800 to-blue-900 text-white shadow-2xl z-40 flex flex-col print:hidden">
         {/* Logo e Título */}
         <div className="p-6 border-b border-slate-700">
           <div className="flex items-center gap-3">
@@ -203,7 +227,7 @@ export function HrLayout({ children, user, onLogout, onNewServer }: HrLayoutProp
       </aside>
 
       {/* Main Content */}
-      <div className="flex-1 ml-64">
+      <div className="flex-1 ml-64 print:ml-0 print:w-full">
         {children}
       </div>
     </div>

@@ -241,6 +241,19 @@ function MonthlyReportContent() {
 
   return (
     <div className="min-h-screen bg-slate-100 print:bg-white">
+      <style>{`
+        @media print {
+          header, footer, nav, aside {
+            display: none !important;
+          }
+          .no-print, .print\\:hidden {
+            display: none !important;
+          }
+          body {
+            background: white !important;
+          }
+        }
+      `}</style>
       {/* Barra de controle (não imprime) */}
       <div className="bg-white border-b border-slate-200 shadow-sm print:hidden sticky top-0 z-50">
         <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between gap-3">

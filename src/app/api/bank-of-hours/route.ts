@@ -8,7 +8,13 @@ export async function GET(request: Request) {
   try {
     const session = await getSession();
     
-    if (!session || session.role !== 'hr') {
+    if (!session) {
+      return NextResponse.json({ error: 'Não autenticado' }, { status: 401 });
+    }
+
+    // RH pode acessar dados de qualquer servidor
+    // Servidor só pode acessar seus próprios dados
+    if (session.role !== 'hr') {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 403 });
     }
 

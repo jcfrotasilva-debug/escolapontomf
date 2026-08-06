@@ -12,7 +12,26 @@ import {
   CheckCircle2,
   XCircle,
   Loader2,
+  Calculator,
 } from 'lucide-react';
+
+// CSS para esconder elementos na impressão
+const printStyles = `
+@media print {
+  header, footer, nav, aside {
+    display: none !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+  .print-only {
+    display: block !important;
+  }
+  body {
+    background: white !important;
+  }
+}
+`;
 
 export default function BancoHorasPage() {
   const { user } = useAuth();
@@ -38,14 +57,45 @@ export default function BancoHorasPage() {
     }
   }, [user, startDate, endDate]);
 
+  const calculateBankOfHours = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(
+        `/api/bank-of-hours/calculate?startDate=${startDate}&endDate=${endDate}`,
+        { method: 'POST' }
+      );
+      const data = await res.json();
+      
+      if (data.success) {
+        // Após calcular, buscar os dados atualizados
+        const res2 = await fetch(
+          `/api/reports/hours-balance?startDate=${startDate}&endDate=${endDate}`
+        );
+        const data2 = await res2.json();
+        setBankData(data2);
+      }
+    } catch (error) {
+      console.error('Erro ao calcular:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const fetchBankData = async () => {
     setLoading(true);
     try {
+      // Primeiro tenta buscar dados existentes
       const res = await fetch(
         `/api/reports/hours-balance?startDate=${startDate}&endDate=${endDate}`
       );
       const data = await res.json();
-      setBankData(data);
+      
+      // Se não houver dados, calcula automaticamente
+      if (!data.entries || data.entries.length === 0) {
+        await calculateBankOfHours();
+      } else {
+        setBankData(data);
+      }
     } catch (error) {
       console.error('Erro ao buscar dados:', error);
     } finally {
@@ -71,9 +121,22 @@ export default function BancoHorasPage() {
 
   return (
     <div className="min-h-screen bg-slate-50 p-6">
+      <style>{`
+        @media print {
+          header, footer, nav, aside {
+            display: none !important;
+          }
+          .no-print {
+            display: none !important;
+          }
+          body {
+            background: white !important;
+          }
+        }
+      `}</style>
       <div className="max-w-7xl mx-auto">
         {/* Cabeçalho */}
-        <div className="mb-8">
+        <div className="mb-8 no-print">
           <h1 className="text-3xl font-bold text-slate-900 mb-2">
             💰 Meu Banco de Horas
           </h1>
@@ -83,10 +146,24 @@ export default function BancoHorasPage() {
         </div>
 
         {/* Filtros de Data */}
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 mb-6">
-          <h2 className="text-lg font-semibold text-slate-900 mb-4">
-            Período
-          </h2>
+        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 mb-6 no-print">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-slate-900">
+              Período
+            </h2>
+            <button
+              onClick={calculateBankOfHours}
+              disabled={loading}
+              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 text-sm"
+            >
+              {loading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Calculator className="w-4 h-4" />
+              )}
+              Calcular Banco de Horas
+            </button>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-2">

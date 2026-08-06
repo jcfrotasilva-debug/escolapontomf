@@ -14,6 +14,7 @@ import {
   CheckCircle2,
   XCircle,
   Clock,
+  Calculator,
 } from 'lucide-react';
 
 export default function RHBancoHorasPage() {
@@ -51,6 +52,38 @@ export default function RHBancoHorasPage() {
       setServers(data.users || []);
     } catch (error) {
       console.error('Erro ao buscar servidores:', error);
+    }
+  };
+
+  const calculateBankOfHours = async () => {
+    if (!selectedServer || !startDate || !endDate) {
+      alert('Selecione um servidor e o período');
+      return;
+    }
+
+    if (!confirm('Calcular banco de horas para este período? Isso irá atualizar todos os dados.')) {
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const res = await fetch(
+        `/api/bank-of-hours/calculate?userId=${selectedServer}&startDate=${startDate}&endDate=${endDate}`,
+        { method: 'POST' }
+      );
+      const data = await res.json();
+      
+      if (data.success) {
+        alert(data.message);
+        await fetchBankData();
+      } else {
+        alert(data.error || 'Erro ao calcular banco de horas');
+      }
+    } catch (error) {
+      console.error('Erro ao calcular:', error);
+      alert('Erro ao calcular banco de horas');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -184,18 +217,32 @@ export default function RHBancoHorasPage() {
               />
             </div>
           </div>
-          <button
-            onClick={fetchBankData}
-            disabled={loading || !selectedServer}
-            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-          >
-            {loading ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <DollarSign className="w-4 h-4" />
-            )}
-            Consultar Banco de Horas
-          </button>
+          <div className="flex gap-3">
+            <button
+              onClick={calculateBankOfHours}
+              disabled={loading || !selectedServer}
+              className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            >
+              {loading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Calculator className="w-4 h-4" />
+              )}
+              Calcular
+            </button>
+            <button
+              onClick={fetchBankData}
+              disabled={loading || !selectedServer}
+              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            >
+              {loading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <DollarSign className="w-4 h-4" />
+              )}
+              Consultar
+            </button>
+          </div>
         </div>
 
         {/* Resultados */}
